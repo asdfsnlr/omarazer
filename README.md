@@ -2,6 +2,18 @@
 
 An Omarchy shell bar widget and panel plugin that connects to the [OpenRazer](https://openrazer.github.io/) daemon to monitor and manage connected Razer peripherals (keyboards, mice, mousemats, headsets, and accessories).
 
+![OmaRazer Preview](preview.png)
+
+## Benefits
+
+- **At-a-Glance Status in Your Bar**: Instantly see connected device counts and battery states right from the Omarchy status bar without cluttering your workspace.
+- **Native & Lightweight Performance**: Fast, native QML interface powered by Quickshell — no bloated background web runtimes or heavy Electron applications required.
+- **Instant Lighting & Profile Switching**: Adjust RGB lighting effects, colors, brightness, animation speeds, and global presets in seconds with immediate hardware response.
+- **Wireless Battery Awareness**: Color-coded battery level indicators and charging status prevent your wireless mice and headsets from running out of power mid-game or mid-work.
+- **Keyboard-First Ergonomics**: Designed for tiling window manager workflows with full keyboard navigation, quick shortcuts (`Esc` to close, `r` to refresh), and mouse controls.
+- **Self-Healing & Diagnostic Tools**: Live daemon connectivity checks with one-click restart actions if the OpenRazer background service is stopped.
+- **Scriptable CLI Automation**: Includes a standalone Python CLI tool for automating lighting profiles, polling rates, and brightness via scripts or custom keybindings.
+
 ## Features
 
 - **Device Discovery & Status**: Automatically detects all connected Razer devices via the OpenRazer daemon.
@@ -19,41 +31,68 @@ An Omarchy shell bar widget and panel plugin that connects to the [OpenRazer](ht
   - **Global Quick Presets**: Quick lighting presets for all devices simultaneously (Spectrum, Wave, Razer Green, Off).
 - **DPI & Polling Rate**: Displays active mouse DPI configuration and polling rate (Hz).
 - **Brightness Control**: Inline brightness sliders for devices with lighting support.
-- **Bar Widget**: Shows Razer status icon and connected device count on the Omarchy status bar.
+- **Bar Widget**: Shows Razer status icon and connected device count on the Omarchy status bar with hover tooltip summaries.
 - **Keyboard Navigation & Shortcuts**: Supports full keyboard navigation, `Esc` to close, and `r` to refresh.
 - **Daemon Diagnostics**: Clear error reporting and one-click daemon restart if the daemon is offline.
 
-## Requirements
+## Requirements & External Dependencies
 
-- **Omarchy Linux** with Quickshell plugin architecture
+- **Omarchy Linux** (Quattro shell with plugin support)
 - **OpenRazer Daemon & Python Client**:
   - `openrazer-daemon`
   - `python-openrazer`
-- Ensure your user is in the `openrazer` group:
+- Ensure your user is in the `openrazer` group and the daemon service is running:
   ```bash
   sudo gpasswd -a "$USER" openrazer
   systemctl --user enable --now openrazer-daemon
   ```
+
 
 ## Installation
 
 Add and enable the plugin directly in Omarchy:
 
 ```bash
-omarchy plugin add https://github.com/slanger/omarchy-openrazer.git --enable
+omarchy plugin add https://github.com/asdfsnlr/omarazer.git --enable
 ```
 
-Or clone/symlink locally for development:
+Or install and enable locally for development:
 
 ```bash
 mkdir -p ~/.config/omarchy/plugins
-cp -r "$PWD" ~/.config/omarchy/plugins/asdfsnlr.openrazer
-omarchy plugin enable asdfsnlr.openrazer --section right
+cp -r "$PWD" ~/.config/omarchy/plugins/asdfsnlr.omarazer
+omarchy plugin enable asdfsnlr.omarazer --section right
 ```
+
+## Removal
+
+To disable or remove the plugin from Omarchy:
+
+```bash
+# Disable without uninstalling
+omarchy plugin disable asdfsnlr.omarazer
+
+# Remove the plugin
+omarchy plugin remove asdfsnlr.omarazer
+```
+
+Or remove manually if installed locally:
+
+```bash
+omarchy plugin disable asdfsnlr.omarazer
+rm -rf ~/.config/omarchy/plugins/asdfsnlr.omarazer
+```
+
+## Configuration
+
+The widget supports configuration via Omarchy plugin settings (`manifest.json` schema):
+
+- `pollIntervalSec` (*integer*, default: `30`): Polling interval in seconds to refresh device status (min: 5, max: 300).
+- `showCountInBar` (*boolean*, default: `true`): Whether to show the connected device count next to the icon in the bar.
 
 ## CLI Usage
 
-The plugin includes a standalone Python CLI scanner and management script:
+The plugin includes a standalone Python CLI scanner and management script (`scripts/razer_devices.py` or `main.py`):
 
 ```bash
 # Print JSON output
@@ -78,7 +117,7 @@ python3 scripts/razer_devices.py --set-poll-rate <serial> 1000
 
 ## Running Tests
 
-Run the test suites for Python and JavaScript components:
+Run the test suites and validations:
 
 ```bash
 # Run Python unit tests
@@ -96,4 +135,4 @@ qmllint -I /usr/share/omarchy/shell ./Panel.qml
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
