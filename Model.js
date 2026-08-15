@@ -103,6 +103,18 @@ function formatBrightness(val) {
   return ""
 }
 
+function getPollInterval(settings, defaultVal) {
+  var d = (typeof defaultVal === "number" && defaultVal >= 5) ? defaultVal : 30
+  if (!settings || typeof settings !== "object") return d
+  var v = settings.pollIntervalSec !== undefined ? settings.pollIntervalSec : settings.refreshIntervalSec
+  if (typeof v === "number" && v >= 5 && v <= 3600) return Math.round(v)
+  if (typeof v === "string") {
+    var n = parseInt(v, 10)
+    if (!isNaN(n) && n >= 5 && n <= 3600) return n
+  }
+  return d
+}
+
 function summaryText(data) {
   if (!data || !data.daemon_running) {
     return data && data.error ? data.error : "OpenRazer daemon not running"
@@ -468,6 +480,7 @@ if (typeof module !== "undefined" && module.exports) {
     formatDpi: formatDpi,
     formatPollRate: formatPollRate,
     formatBrightness: formatBrightness,
+    getPollInterval: getPollInterval,
     summaryText: summaryText,
     effectDisplayName: effectDisplayName,
     effectIcon: effectIcon,

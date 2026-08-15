@@ -2,7 +2,9 @@
 
 An Omarchy shell bar widget and panel plugin that connects to the [OpenRazer](https://openrazer.github.io/) daemon to monitor and manage connected Razer peripherals (keyboards, mice, mousemats, headsets, and accessories).
 
-![OmaRazer Preview](preview.png)
+<p align="center">
+  <img src="preview.png" alt="OmaRazer Preview" />
+</p>
 
 ## Benefits
 
@@ -85,10 +87,53 @@ rm -rf ~/.config/omarchy/plugins/asdfsnlr.omarazer
 
 ## Configuration
 
-The widget supports configuration via Omarchy plugin settings (`manifest.json` schema):
+The widget supports configuration via Omarchy plugin settings (`manifest.json` schema) and the Omarchy bar CLI:
 
-- `pollIntervalSec` (*integer*, default: `30`): Polling interval in seconds to refresh device status (min: 5, max: 300).
+- `pollIntervalSec` / `refreshIntervalSec` (*integer*, default: `30`): Polling and refresh interval in seconds to refresh device status (min: `5`, max: `300`).
 - `showCountInBar` (*boolean*, default: `true`): Whether to show the connected device count next to the icon in the bar.
+
+### Changing the Refresh Interval
+
+You can configure how frequently OmaRazer refreshes device status using any of the following methods:
+
+#### 1. Using the Omarchy Bar CLI
+
+Use `omarchy bar set` to dynamically update the refresh interval (e.g., to 15 seconds):
+
+```bash
+# Set refresh interval using pollIntervalSec
+omarchy bar set asdfsnlr.omarazer pollIntervalSec 15
+
+# Or using the refreshIntervalSec alias
+omarchy bar set asdfsnlr.omarazer refreshIntervalSec 15
+```
+
+#### 2. Editing `~/.config/omarchy/shell.json`
+
+Add `pollIntervalSec` (or `refreshIntervalSec`) directly to your OmaRazer bar layout entry in `~/.config/omarchy/shell.json`:
+
+```json
+{
+  "bar": {
+    "layout": {
+      "right": [
+        {
+          "id": "asdfsnlr.omarazer",
+          "pollIntervalSec": 15,
+          "showCountInBar": true
+        }
+      ]
+    }
+  }
+}
+```
+
+#### 3. Manual On-Demand Refresh
+
+To trigger an immediate refresh without waiting for the next polling interval:
+- **Bar Widget**: Middle-click the OmaRazer bar icon.
+- **Panel Shortcut**: Press <kbd>r</kbd> or <kbd>R</kbd> while the OmaRazer panel is focused.
+- **Panel Header**: Click the refresh button (**󰑐**) in the panel header.
 
 ## CLI Usage
 

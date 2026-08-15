@@ -23,10 +23,7 @@ Panel {
   readonly property color dim: Qt.darker(fg, 1.45)
   readonly property string fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
 
-  readonly property int pollInterval: {
-    var v = settings ? settings.pollIntervalSec : undefined
-    return (typeof v === "number" && v >= 5) ? v : 10
-  }
+  readonly property int pollInterval: Model.getPollInterval(root.settings, 30)
 
   readonly property bool showCountInBar: {
     var v = settings ? settings.showCountInBar : undefined

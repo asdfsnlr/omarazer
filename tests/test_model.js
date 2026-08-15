@@ -112,4 +112,14 @@ assert.strictEqual(Model.formatSpeed("2"), "Normal");
 assert.strictEqual(Model.formatSpeed("3"), "Slow");
 assert.strictEqual(Model.formatSpeed("4"), "Very Slow");
 
+// Test getPollInterval
+assert.strictEqual(Model.getPollInterval(undefined), 30);
+assert.strictEqual(Model.getPollInterval({}), 30);
+assert.strictEqual(Model.getPollInterval({ pollIntervalSec: 15 }), 15);
+assert.strictEqual(Model.getPollInterval({ refreshIntervalSec: 20 }), 20);
+assert.strictEqual(Model.getPollInterval({ pollIntervalSec: "45" }), 45);
+assert.strictEqual(Model.getPollInterval({ pollIntervalSec: 2 }, 30), 30);
+assert.strictEqual(Model.getPollInterval({ pollIntervalSec: 5000 }, 30), 30);
+assert.strictEqual(Model.getPollInterval({ pollIntervalSec: 10, refreshIntervalSec: 25 }), 10);
+
 console.log("All Model.js tests passed!");
