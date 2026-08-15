@@ -1,0 +1,115 @@
+const assert = require("assert");
+const Model = require("../Model.js");
+
+// Test parseData
+const rawJson = JSON.stringify({
+  daemon_running: true,
+  version: "3.6.0",
+  device_count: 2,
+  devices: [
+    { name: "Razer BlackWidow", type: "keyboard", serial: "123", current_effect: "wave" },
+    { name: "Razer DeathAdder", type: "mouse", serial: "456", current_effect: "static", primary_color: "#00ff00" }
+  ]
+});
+
+const parsed = Model.parseData(rawJson);
+assert.strictEqual(parsed.daemon_running, true);
+assert.strictEqual(parsed.device_count, 2);
+assert.strictEqual(parsed.devices.length, 2);
+
+// Test formatBarText with new device bar icon
+assert.strictEqual(Model.formatBarText(parsed, true), "󰾰 2");
+assert.strictEqual(Model.formatBarText(parsed, false), "󰾰");
+assert.strictEqual(Model.formatBarText({ daemon_running: false }, true), "󰾰 !");
+
+// Test deviceTypeIcon
+assert.strictEqual(Model.deviceTypeIcon("keyboard"), "󰌌");
+assert.strictEqual(Model.deviceTypeIcon("mouse"), "󰍽");
+assert.strictEqual(Model.deviceTypeIcon("keypad"), "󰦤");
+assert.strictEqual(Model.deviceTypeIcon("speaker"), "󰓃");
+assert.strictEqual(Model.deviceTypeIcon("headset"), "󰋋");
+assert.strictEqual(Model.deviceTypeIcon("mousemat"), "󰆥");
+assert.strictEqual(Model.deviceTypeIcon("accessory"), "󰒋");
+assert.strictEqual(Model.deviceTypeIcon({ type: "audio", name: "Razer Nommo Chroma" }), "󰓃");
+assert.strictEqual(Model.deviceTypeIcon({ type: "audio", name: "Razer Kraken V3" }), "󰋋");
+assert.strictEqual(Model.deviceTypeIcon({ type: "mousemat", name: "Razer Goliathus Extended Chroma" }), "󰆥");
+
+// Test effectIcon & effectDisplayName
+assert.strictEqual(Model.effectDisplayName("breath_single"), "Breathing");
+assert.strictEqual(Model.effectDisplayName("spectrum"), "Spectrum");
+assert.strictEqual(Model.effectIcon("static"), "󰏘");
+assert.strictEqual(Model.effectIcon("wave"), "󰓅");
+
+// Test availableEffects
+const kbEffects = Model.availableEffects({ type: "keyboard", supported_effects: ["static", "wave", "breath", "spectrum"] });
+assert(kbEffects.includes("wave"));
+assert(kbEffects.includes("static"));
+
+// Test categorizedEffects
+const kbDevice = {
+  name: "Razer BlackWidow",
+  type: "keyboard",
+  supported_effects: ["none", "static", "spectrum", "wave", "breath_single", "breath_random", "breath_dual", "reactive", "ripple", "ripple_random"]
+};
+const categories = Model.categorizedEffects(kbDevice);
+assert.strictEqual(categories.length, 3);
+assert.strictEqual(categories[0].id, "presets");
+assert.strictEqual(categories[0].label, "Presets");
+assert.deepStrictEqual(categories[0].effects, ["static", "spectrum", "none"]);
+assert.strictEqual(categories[1].id, "dynamic");
+assert.strictEqual(categories[1].label, "Dynamic");
+assert.deepStrictEqual(categories[1].effects, ["wave", "breath_single"]);
+assert.strictEqual(categories[2].id, "interactive");
+assert.strictEqual(categories[2].label, "Interactive");
+assert.deepStrictEqual(categories[2].effects, ["reactive", "ripple"]);
+
+// Test isEffectSelected
+assert.strictEqual(Model.isEffectSelected("breath_dual", "breath_single"), true);
+assert.strictEqual(Model.isEffectSelected("breath_random", "breath_single"), true);
+assert.strictEqual(Model.isEffectSelected("ripple_random", "ripple"), true);
+assert.strictEqual(Model.isEffectSelected("wave", "wave"), true);
+assert.strictEqual(Model.isEffectSelected("static", "wave"), false);
+
+// Test hasCustomizationOptions
+assert.strictEqual(Model.hasCustomizationOptions({ current_effect: "static" }), true);
+assert.strictEqual(Model.hasCustomizationOptions({ current_effect: "wave" }), true);
+assert.strictEqual(Model.hasCustomizationOptions({ current_effect: "breath_random" }), true);
+assert.strictEqual(Model.hasCustomizationOptions({ current_effect: "reactive" }), true);
+assert.strictEqual(Model.hasCustomizationOptions({ current_effect: "starlight_random" }), true);
+assert.strictEqual(Model.hasCustomizationOptions({ current_effect: "ripple" }), true);
+assert.strictEqual(Model.hasCustomizationOptions({ current_effect: "spectrum", supported_effects: ["spectrum"] }), false);
+
+// Test needsSpeed, speedLevels, formatSpeed, isStarlightEffect
+assert.strictEqual(Model.needsSpeed("reactive"), true);
+assert.strictEqual(Model.needsSpeed("starlight_random"), true);
+assert.strictEqual(Model.needsSpeed("starlight_single"), true);
+assert.strictEqual(Model.needsSpeed("starlight_dual"), true);
+assert.strictEqual(Model.needsSpeed("ripple"), true);
+assert.strictEqual(Model.needsSpeed("ripple_random"), true);
+assert.strictEqual(Model.needsSpeed("static"), false);
+assert.strictEqual(Model.needsSpeed("wave"), false);
+assert.strictEqual(Model.needsSpeed("spectrum"), false);
+
+assert.strictEqual(Model.isStarlightEffect("starlight"), true);
+assert.strictEqual(Model.isStarlightEffect("starlight_random"), true);
+assert.strictEqual(Model.isStarlightEffect("starlight_single"), true);
+assert.strictEqual(Model.isStarlightEffect("reactive"), false);
+
+const reactiveLevels = Model.speedLevels("reactive");
+assert.strictEqual(reactiveLevels.length, 4);
+assert.strictEqual(reactiveLevels[0].value, "1");
+assert.strictEqual(reactiveLevels[0].label, "Fast");
+assert.strictEqual(reactiveLevels[3].value, "4");
+assert.strictEqual(reactiveLevels[3].label, "Very Slow");
+
+const starlightLevels = Model.speedLevels("starlight_random");
+assert.strictEqual(starlightLevels.length, 3);
+assert.strictEqual(starlightLevels[0].value, "1");
+assert.strictEqual(starlightLevels[0].label, "Fast");
+
+assert.strictEqual(Model.formatSpeed("1"), "Fast");
+assert.strictEqual(Model.formatSpeed("2"), "Normal");
+assert.strictEqual(Model.formatSpeed("3"), "Slow");
+assert.strictEqual(Model.formatSpeed("4"), "Very Slow");
+
+console.log("All Model.js tests passed!");
