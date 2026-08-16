@@ -122,7 +122,12 @@ assert.strictEqual(Model.hasBrightnessSupport([{ has_brightness: true, brightnes
 assert.strictEqual(Model.hasBrightnessSupport([{ has_brightness: false }]), false);
 assert.strictEqual(Model.hasBrightnessSupport([]), false);
 assert.strictEqual(Model.averageBrightness([{ has_brightness: true, brightness: 80 }, { has_brightness: true, brightness: 40 }]), 60);
+assert.strictEqual(Model.averageBrightness([{ has_brightness: true, brightness: 0 }]), 0);
+assert.strictEqual(Model.averageBrightness([{ has_brightness: true, brightness: 50 }, { has_brightness: true, brightness: 0 }]), 25);
 assert.strictEqual(Model.averageBrightness([{ has_brightness: false }]), 100);
+assert.strictEqual(Model.formatBrightness(0), "0%");
+assert.strictEqual(Model.formatBrightness(75), "75%");
+assert.strictEqual(Model.formatBrightness(null), "");
 
 // Test formatPollRate & supportedPollRates
 assert.strictEqual(Model.formatPollRate(1000), "1000 Hz");

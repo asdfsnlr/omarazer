@@ -48,6 +48,23 @@ Panel {
 
   function setBrightness(serial, value) {
     if (!serial) return
+    var valNum = Number(value)
+    if (root.razerData && Array.isArray(root.razerData.devices)) {
+      var copy = Object.assign({}, root.razerData)
+      copy.devices = root.razerData.devices.map(function(d) {
+        if (!d) return d
+        if (serial === "all" || (d.serial && String(d.serial).toLowerCase() === String(serial).toLowerCase())) {
+          var dc = Object.assign({}, d)
+          if (dc.has_brightness) {
+            dc.brightness = valNum
+          }
+          return dc
+        }
+        return d
+      })
+      root.razerData = copy
+      root.dataVersion++
+    }
     actionProc.command = ["python3", pathFromUrl(Qt.resolvedUrl("scripts/razer_devices.py")), "--set-brightness", String(serial), String(value)]
     actionProc.running = true
   }
@@ -330,7 +347,7 @@ Panel {
 
             // Global Brightness Slider (All Devices)
             RowLayout {
-              visible: Model.hasBrightnessSupport(root.razerData.devices)
+              visible: root.dataVersion >= 0 && Model.hasBrightnessSupport(root.razerData.devices)
               Layout.fillWidth: true
               spacing: Style.space(8)
 
@@ -358,7 +375,7 @@ Panel {
                 maximum: 100
                 step: 5
                 integer: true
-                value: Model.averageBrightness(root.razerData.devices)
+                value: root.dataVersion >= 0 ? Model.averageBrightness(root.razerData.devices) : 100
                 onReleased: function(v) {
                   root.setBrightness("all", v)
                 }
