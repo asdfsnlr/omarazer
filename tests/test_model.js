@@ -112,6 +112,31 @@ assert.strictEqual(Model.formatSpeed("2"), "Normal");
 assert.strictEqual(Model.formatSpeed("3"), "Slow");
 assert.strictEqual(Model.formatSpeed("4"), "Very Slow");
 
+// Test formatDaemonVersion
+assert.strictEqual(Model.formatDaemonVersion("3.6.0"), "Installed OpenRazer Daemon v3.6.0");
+assert.strictEqual(Model.formatDaemonVersion(""), "");
+assert.strictEqual(Model.formatDaemonVersion(null), "");
+
+// Test hasBrightnessSupport and averageBrightness
+assert.strictEqual(Model.hasBrightnessSupport([{ has_brightness: true, brightness: 80 }]), true);
+assert.strictEqual(Model.hasBrightnessSupport([{ has_brightness: false }]), false);
+assert.strictEqual(Model.hasBrightnessSupport([]), false);
+assert.strictEqual(Model.averageBrightness([{ has_brightness: true, brightness: 80 }, { has_brightness: true, brightness: 40 }]), 60);
+assert.strictEqual(Model.averageBrightness([{ has_brightness: false }]), 100);
+
+// Test formatPollRate & supportedPollRates
+assert.strictEqual(Model.formatPollRate(1000), "1000 Hz");
+assert.strictEqual(Model.formatPollRate(500), "500 Hz");
+assert.strictEqual(Model.formatPollRate(125), "125 Hz");
+assert.strictEqual(Model.formatPollRate(null), "");
+assert.deepStrictEqual(Model.supportedPollRates({ has_poll_rate: true, supported_poll_rates: [125, 500, 1000] }), [125, 500, 1000]);
+assert.deepStrictEqual(Model.supportedPollRates({ type: "mouse", has_poll_rate: true, supported_poll_rates: [] }), [125, 500, 1000]);
+
+// Test formatDpi
+assert.strictEqual(Model.formatDpi(1800), "1800 DPI");
+assert.strictEqual(Model.formatDpi([1800, 1800]), "1800 DPI");
+assert.strictEqual(Model.formatDpi([800, 1200]), "800 x 1200 DPI");
+
 // Test getPollInterval
 assert.strictEqual(Model.getPollInterval(undefined), 30);
 assert.strictEqual(Model.getPollInterval({}), 30);

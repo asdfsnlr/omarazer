@@ -96,6 +96,43 @@ function formatPollRate(pollRate) {
   return ""
 }
 
+function supportedPollRates(device) {
+  if (device && Array.isArray(device.supported_poll_rates) && device.supported_poll_rates.length > 0) {
+    return device.supported_poll_rates
+  }
+  if (device && (device.has_poll_rate || device.type === "mouse")) {
+    return [125, 500, 1000]
+  }
+  return []
+}
+
+function formatDaemonVersion(version) {
+  if (!version) return ""
+  return "Installed OpenRazer Daemon v" + version
+}
+
+function hasBrightnessSupport(devices) {
+  if (!Array.isArray(devices)) return false
+  for (var i = 0; i < devices.length; i++) {
+    if (devices[i] && devices[i].has_brightness) return true
+  }
+  return false
+}
+
+function averageBrightness(devices) {
+  if (!Array.isArray(devices) || devices.length === 0) return 100
+  var sum = 0
+  var count = 0
+  for (var i = 0; i < devices.length; i++) {
+    var d = devices[i]
+    if (d && d.has_brightness && d.brightness !== null && d.brightness !== undefined) {
+      sum += Number(d.brightness)
+      count++
+    }
+  }
+  return count > 0 ? Math.round(sum / count) : 100
+}
+
 function formatBrightness(val) {
   if (val !== null && val !== undefined && !isNaN(Number(val))) {
     return Math.round(Number(val)) + "%"
@@ -479,6 +516,10 @@ if (typeof module !== "undefined" && module.exports) {
     formatDeviceType: formatDeviceType,
     formatDpi: formatDpi,
     formatPollRate: formatPollRate,
+    supportedPollRates: supportedPollRates,
+    formatDaemonVersion: formatDaemonVersion,
+    hasBrightnessSupport: hasBrightnessSupport,
+    averageBrightness: averageBrightness,
     formatBrightness: formatBrightness,
     getPollInterval: getPollInterval,
     summaryText: summaryText,

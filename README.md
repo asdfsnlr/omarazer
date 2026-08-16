@@ -1,7 +1,10 @@
 # OmaRazer - OpenRazer Devices Plugin for Omarchy
 
-An Omarchy shell bar widget and panel plugin that connects to the [OpenRazer](https://openrazer.github.io/) daemon to monitor and manage connected Razer peripherals (keyboards, mice, mousemats, headsets, and accessories).
+An Omarchy shell bar widget and panel plugin that connects to the OpenRazer daemon to monitor and manage connected Razer peripherals (keyboards, mice, mousemats, headsets, and accessories).
 
+> **Disclaimer:** *This project is an unofficial community plugin for Omarchy. 
+> It is not developed by, endorsed by, affiliated with, or in any way officially connected to [Razer Inc.](https://razer.com) 
+> or the [OpenRazer project](https://openrazer.github.io/).*
 <p align="center">
   <img src="preview.png" alt="OmaRazer Preview" />
 </p>

@@ -213,10 +213,14 @@ def get_device_info(device: Any, daemon_version: str = "") -> dict[str, Any]:
     if has_poll_rate:
         try:
             rates = safe_get(device, "supported_poll_rates", [])
-            if isinstance(rates, (list, tuple)):
+            if isinstance(rates, (list, tuple)) and rates:
                 supported_poll_rates = [int(r) for r in rates]
+            elif poll_rate is not None:
+                supported_poll_rates = [125, 500, 1000]
         except (NotImplementedError, Exception):
-            supported_poll_rates = []
+            supported_poll_rates = [125, 500, 1000] if poll_rate is not None else []
+    if not supported_poll_rates and has_poll_rate:
+        supported_poll_rates = [125, 500, 1000]
 
     # Lighting / FX
     fx = safe_get(device, "fx", None)
@@ -579,7 +583,7 @@ def print_summary(status: dict[str, Any]) -> None:
         print("Hint: Start with 'systemctl --user start openrazer-daemon'")
         return
 
-    print(f"OpenRazer Daemon v{status.get('version', 'unknown')} - {status.get('device_count', 0)} devices connected")
+    print(f"Installed OpenRazer Daemon v{status.get('version', 'unknown')} - {status.get('device_count', 0)} devices connected")
     print("-" * 60)
     for i, dev in enumerate(status.get("devices", []), 1):
         print(f"[{i}] {dev['name']} ({dev['type'].title()})")

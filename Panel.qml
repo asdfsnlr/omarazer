@@ -52,6 +52,12 @@ Panel {
     actionProc.running = true
   }
 
+  function setPollRate(serial, rate) {
+    if (!serial || !rate) return
+    actionProc.command = ["python3", pathFromUrl(Qt.resolvedUrl("scripts/razer_devices.py")), "--set-poll-rate", String(serial), String(rate)]
+    actionProc.running = true
+  }
+
   function toggleDeviceExpanded(serial) {
     if (!serial) return
     var copy = Object.assign({}, expandedSerials)
@@ -165,7 +171,7 @@ Panel {
     bar: root.bar
     open: root.opened
     focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(440))
+    contentWidth: panel.fittedContentWidth(Style.space(500))
     contentHeight: panel.fittedContentHeight(contentColumn.implicitHeight)
 
     PanelKeyCatcher {
@@ -209,7 +215,7 @@ Panel {
             }
 
             Text {
-              text: Model.summaryText(root.razerData) + (root.razerData.version ? " • v" + root.razerData.version : "")
+              text: Model.summaryText(root.razerData) + (root.razerData.version ? " • Installed OpenRazer Daemon v" + root.razerData.version : "")
               color: root.dim
               font.family: root.fontFamily
               font.pixelSize: Style.font.caption
@@ -231,7 +237,7 @@ Panel {
           }
         }
 
-        // ── Global Quick Lighting Controls (All Devices) ──
+        // ── Global Controls (All Devices) ──
         BorderSurface {
           visible: root.razerData.daemon_running && root.razerData.devices.length > 0
           Layout.fillWidth: true
@@ -239,10 +245,10 @@ Panel {
           borderSpec: Border.flat(Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.06), 1)
           radius: Style.cornerRadius
           padding: Style.space(8)
-          implicitHeight: quickLightingLayout.implicitHeight + contentTopInset + contentBottomInset
+          implicitHeight: globalControlsLayout.implicitHeight + contentTopInset + contentBottomInset
 
-          RowLayout {
-            id: quickLightingLayout
+          ColumnLayout {
+            id: globalControlsLayout
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
@@ -250,71 +256,124 @@ Panel {
             anchors.rightMargin: parent.contentRightInset
             anchors.bottomMargin: parent.contentBottomInset
             anchors.leftMargin: parent.contentLeftInset
-            spacing: Style.space(6)
+            spacing: Style.space(8)
 
-            Text {
-              text: "󰌵"
-              color: Color.accent
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.caption
+            RowLayout {
+              Layout.fillWidth: true
+              spacing: Style.space(6)
+
+              Text {
+                text: "󰌵"
+                color: Color.accent
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.caption
+              }
+
+              Text {
+                text: "All Devices:"
+                color: root.dim
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.caption
+                font.bold: true
+              }
+
+              Item { Layout.fillWidth: true }
+
+              Button {
+                text: "Spectrum"
+                iconText: "󰑖"
+                foreground: root.fg
+                fontFamily: root.fontFamily
+                fontSize: Style.font.caption
+                bordered: true
+                horizontalPadding: Style.space(6)
+                verticalPadding: Style.space(3)
+                onClicked: root.setEffect("all", "spectrum")
+              }
+
+              Button {
+                text: "Wave"
+                iconText: "󰓅"
+                foreground: root.fg
+                fontFamily: root.fontFamily
+                fontSize: Style.font.caption
+                bordered: true
+                horizontalPadding: Style.space(6)
+                verticalPadding: Style.space(3)
+                onClicked: root.setEffect("all", "wave", null, null, "1")
+              }
+
+              Button {
+                text: "Green"
+                iconText: "󰏘"
+                foreground: root.fg
+                fontFamily: root.fontFamily
+                fontSize: Style.font.caption
+                bordered: true
+                horizontalPadding: Style.space(6)
+                verticalPadding: Style.space(3)
+                onClicked: root.setEffect("all", "static", "#00ff00")
+              }
+
+              Button {
+                text: "Off"
+                iconText: "󰚌"
+                foreground: root.fg
+                fontFamily: root.fontFamily
+                fontSize: Style.font.caption
+                bordered: true
+                horizontalPadding: Style.space(6)
+                verticalPadding: Style.space(3)
+                onClicked: root.setEffect("all", "none")
+              }
             }
 
-            Text {
-              text: "All Devices:"
-              color: root.dim
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.caption
-              font.bold: true
-            }
+            // Global Brightness Slider (All Devices)
+            RowLayout {
+              visible: Model.hasBrightnessSupport(root.razerData.devices)
+              Layout.fillWidth: true
+              spacing: Style.space(8)
 
-            Item { Layout.fillWidth: true }
+              Text {
+                text: "󰃟"
+                color: root.dim
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.bodySmall
+                Layout.alignment: Qt.AlignVCenter
+              }
 
-            Button {
-              text: "Spectrum"
-              iconText: "󰑖"
-              foreground: root.fg
-              fontFamily: root.fontFamily
-              fontSize: Style.font.caption
-              bordered: true
-              horizontalPadding: Style.space(6)
-              verticalPadding: Style.space(3)
-              onClicked: root.setEffect("all", "spectrum")
-            }
+              Text {
+                text: "Brightness"
+                color: root.dim
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.caption
+                Layout.alignment: Qt.AlignVCenter
+              }
 
-            Button {
-              text: "Wave"
-              iconText: "󰓅"
-              foreground: root.fg
-              fontFamily: root.fontFamily
-              fontSize: Style.font.caption
-              bordered: true
-              horizontalPadding: Style.space(6)
-              verticalPadding: Style.space(3)
-              onClicked: root.setEffect("all", "wave", null, null, "1")
-            }
+              PanelSlider {
+                id: globalBrightnessSlider
+                bar: root.bar
+                Layout.fillWidth: true
+                minimum: 0
+                maximum: 100
+                step: 5
+                integer: true
+                value: Model.averageBrightness(root.razerData.devices)
+                onReleased: function(v) {
+                  root.setBrightness("all", v)
+                }
+              }
 
-            Button {
-              text: "Green"
-              iconText: "󰏘"
-              foreground: root.fg
-              fontFamily: root.fontFamily
-              fontSize: Style.font.caption
-              bordered: true
-              horizontalPadding: Style.space(6)
-              verticalPadding: Style.space(3)
-              onClicked: root.setEffect("all", "static", "#00ff00")
-            }
-
-            Button {
-              text: "Off"
-              iconText: "󰚌"
-              foreground: root.fg
-              fontFamily: root.fontFamily
-              fontSize: Style.font.caption
-              bordered: true
-              horizontalPadding: Style.space(6)
-              verticalPadding: Style.space(3)
-              onClicked: root.setEffect("all", "none")
+              Text {
+                text: Model.formatBrightness(globalBrightnessSlider.liveValue)
+                color: root.fg
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.caption
+                font.bold: true
+                horizontalAlignment: Text.AlignRight
+                Layout.minimumWidth: Style.space(36)
+                Layout.alignment: Qt.AlignVCenter
+              }
             }
           }
         }
@@ -455,6 +514,8 @@ Panel {
           id: deviceScroll
           visible: root.razerData.devices.length > 0
           Layout.fillWidth: true
+          Layout.topMargin: Style.space(8)
+          Layout.bottomMargin: Style.space(8)
           implicitHeight: Math.min(devicesColumn.implicitHeight, Style.space(520))
           contentHeight: devicesColumn.implicitHeight
           clip: true
@@ -652,6 +713,49 @@ Panel {
                       horizontalAlignment: Text.AlignRight
                       Layout.minimumWidth: Style.space(36)
                       Layout.alignment: Qt.AlignVCenter
+                    }
+                  }
+
+                  // Polling Rate Selector (if supported)
+                  RowLayout {
+                    visible: deviceCard.modelData.has_poll_rate && deviceCard.modelData.poll_rate !== null
+                    Layout.fillWidth: true
+                    spacing: Style.space(8)
+
+                    Text {
+                      text: "󰍽"
+                      color: root.dim
+                      font.family: root.fontFamily
+                      font.pixelSize: Style.font.bodySmall
+                      Layout.alignment: Qt.AlignVCenter
+                    }
+
+                    Text {
+                      text: "Polling Rate"
+                      color: root.dim
+                      font.family: root.fontFamily
+                      font.pixelSize: Style.font.caption
+                      Layout.alignment: Qt.AlignVCenter
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    Repeater {
+                      model: Model.supportedPollRates(deviceCard.modelData)
+
+                      delegate: Button {
+                        required property int modelData
+                        text: modelData + " Hz"
+                        foreground: deviceCard.modelData.poll_rate === modelData ? Color.accent : root.fg
+                        fontFamily: root.fontFamily
+                        fontSize: Style.font.caption
+                        bordered: true
+                        horizontalPadding: Style.space(6)
+                        verticalPadding: Style.space(3)
+                        onClicked: {
+                          root.setPollRate(deviceCard.modelData.serial, modelData)
+                        }
+                      }
                     }
                   }
 
@@ -1231,6 +1335,21 @@ Panel {
               }
             }
           }
+        }
+
+        PanelSeparator {
+          Layout.fillWidth: true
+          foreground: root.fg
+        }
+
+        Text {
+          Layout.fillWidth: true
+          horizontalAlignment: Text.AlignHCenter
+          textFormat: Text.RichText
+          text: "<span style='background-color: " + Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.12) + "; color: " + root.fg + "; border-radius: 3px; padding: 1px 4px;'><b>&nbsp;Esc&nbsp;</b></span> to close, and <span style='background-color: " + Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.12) + "; color: " + root.fg + "; border-radius: 3px; padding: 1px 4px;'><b>&nbsp;r&nbsp;</b></span> to refresh."
+          color: root.dim
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.caption
         }
       }
     }

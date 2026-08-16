@@ -64,5 +64,28 @@ class TestRazerDevices(unittest.TestCase):
         self.assertEqual(res["serial"], "XX123456")
         self.assertEqual(res["type"], "keyboard")
 
+    def test_get_mouse_device_info(self):
+        mock_mouse = MagicMock()
+        mock_mouse.name = "Razer Naga Trinity"
+        mock_mouse.type = "mouse"
+        mock_mouse.serial = "PM1849H"
+        mock_mouse.firmware_version = "v1.2"
+        mock_mouse.has = MagicMock(return_value=False)
+        mock_mouse.brightness = 100
+        mock_mouse.dpi = (1800, 1800)
+        mock_mouse.max_dpi = 16000
+        mock_mouse.poll_rate = 500
+        mock_mouse.capabilities = {"dpi": True, "poll_rate": True, "brightness": True}
+        mock_mouse.fx = MagicMock()
+        mock_mouse.fx.advanced = False
+
+        res = get_device_info(mock_mouse)
+        self.assertEqual(res["name"], "Razer Naga Trinity")
+        self.assertEqual(res["type"], "mouse")
+        self.assertEqual(res["poll_rate"], 500)
+        self.assertEqual(res["supported_poll_rates"], [125, 500, 1000])
+        self.assertEqual(res["dpi"], [1800, 1800])
+        self.assertEqual(res["max_dpi"], 16000)
+
 if __name__ == "__main__":
     unittest.main()
