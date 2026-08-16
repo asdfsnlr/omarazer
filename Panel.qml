@@ -15,6 +15,7 @@ Panel {
   property var razerData: ({ daemon_running: false, version: "", device_count: 0, devices: [], error: null })
   property var expandedSerials: ({})
   property var deviceSpeeds: ({})
+  property int globalBrightness: 100
   property int dataVersion: 0
   property bool loading: false
 
@@ -49,6 +50,9 @@ Panel {
   function setBrightness(serial, value) {
     if (!serial) return
     var valNum = Number(value)
+    if (serial === "all") {
+      root.globalBrightness = valNum
+    }
     if (root.razerData && Array.isArray(root.razerData.devices)) {
       var copy = Object.assign({}, root.razerData)
       copy.devices = root.razerData.devices.map(function(d) {
@@ -375,7 +379,7 @@ Panel {
                 maximum: 100
                 step: 5
                 integer: true
-                value: root.dataVersion >= 0 ? Model.averageBrightness(root.razerData.devices) : 100
+                value: root.globalBrightness
                 onReleased: function(v) {
                   root.setBrightness("all", v)
                 }
