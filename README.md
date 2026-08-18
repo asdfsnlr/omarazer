@@ -14,6 +14,8 @@ An Omarchy shell bar widget and panel plugin that connects to the OpenRazer daem
 - **At-a-Glance Status in Your Bar**: Instantly see connected device counts and battery states right from the Omarchy status bar without cluttering your workspace.
 - **Native & Lightweight Performance**: Fast, native QML interface powered by Quickshell — no bloated background web runtimes or heavy Electron applications required.
 - **Instant Lighting & Profile Switching**: Adjust RGB lighting effects, colors, brightness, animation speeds, and global presets in seconds with immediate hardware response.
+- **Per-Key LED Matrix Editor**: Full-screen keyboard editor with paint modes, color palette, used-color tracking, and key labels — paint individual keys, fill entire rows, or fill all at once.
+- **Saveable Lighting Profiles**: Create, load, and delete named per-key profiles; auto-load on selection with inline creation workflow.
 - **Wireless Battery Awareness**: Color-coded battery level indicators and charging status prevent your wireless mice and headsets from running out of power mid-game or mid-work.
 - **Keyboard-First Ergonomics**: Designed for tiling window manager workflows with full keyboard navigation, quick shortcuts (`Esc` to close, `r` to refresh), and mouse controls.
 - **Self-Healing & Diagnostic Tools**: Live daemon connectivity checks with one-click restart actions if the OpenRazer background service is stopped.
@@ -26,14 +28,29 @@ An Omarchy shell bar widget and panel plugin that connects to the OpenRazer daem
 - **Battery Monitoring**: Live battery percentage and charging state indicators with color-coded levels for wireless devices.
 - **Lighting Effect Configurations**:
   - **Categorized Per-Device Effect Organization**: Grouped into logical categories (**Presets**, **Dynamic**, and **Interactive**) displaying only the lighting effects supported by each peripheral.
-  - **Structured Effect Settings**: Dedicated settings card for the active effect with context-aware parameter controls:
+  - **13 Supported Effects**: Off, Static, Spectrum, Wave, Breathing (Single/Random/Dual), Reactive, Ripple (Single/Random), Starlight (Random/Single/Dual).
+  - **Per-Effect Settings Card**: Dedicated settings card for the active effect with context-aware parameter controls:
     - Primary RGB color palette swatches with active selection indicator.
-    - Secondary RGB color palette swatches for dual-color effects (Dual Breathing, Dual Starlight).
+    - Secondary RGB color palette swatches for dual-color effects (Dual Starlight).
     - Wave direction selector (Left / Right).
-    - Easily accessible animation & reaction speed controls with active selection highlighting (Fast / Normal / Slow / Very Slow).
-    - Dedicated sub-mode switchers for Breathing (Single / Random / Dual), Ripple (Single / Random), and Starlight (Random / Single / Dual).
+    - Speed selector (Fast / Normal / Slow / Very Slow) for Reactive, Ripple, and Starlight effects.
+    - Sub-mode switchers for Breathing (Single / Random), Ripple (Single / Random), and Starlight (Random / Single / Dual).
   - **Interactive Effect Toggles**: Collapsible per-device effect cards toggled by clicking the active effect badge.
   - **Global Quick Presets**: Quick lighting presets for all devices simultaneously (Spectrum, Wave, Razer Green, Off).
+- **Per-Key Lighting Editor** (keyboards and keypads):
+  - Full-screen overlay with scrollable LED matrix grid and key labels (Esc, F1–F12, alphanumeric, modifiers, etc.).
+  - Two paint modes: **Paint** (single key) and **Fill Row** (entire row on click).
+  - Click-and-drag painting across multiple cells.
+  - 10-color palette with current color indicator and used-color tracking row.
+  - **Fill All** / **Clear** / **Recolor All** global actions.
+  - Matrix dimensions and painted key count in the status bar.
+  - Apply to device button with unsaved-changes indicator.
+- **Profile System** (per-key editor):
+  - Save / Load / Delete named lighting profiles.
+  - Styled dropdown with auto-load on selection.
+  - Inline profile creation with **New** → name input → **Save** workflow.
+  - Overwrite existing profiles with **Save** button.
+  - Profiles stored in `~/.config/omarazer/profiles/`.
 - **DPI & Polling Rate**: Displays active mouse DPI configuration and polling rate (Hz).
 - **Brightness Control**: Inline brightness sliders for devices with lighting support.
 - **Bar Widget**: Shows Razer status icon and connected device count on the Omarchy status bar with hover tooltip summaries.
@@ -161,7 +178,45 @@ python3 scripts/razer_devices.py --set-brightness <serial|all> 75
 
 # Set polling rate (Hz) for a device
 python3 scripts/razer_devices.py --set-poll-rate <serial> 1000
+
+# Get per-key LED matrix dimensions (rows, cols)
+python3 scripts/razer_devices.py --get-matrix-dims <serial>
+
+# Set a single key color in the LED matrix (0-indexed row/col, RGB 0-255)
+python3 scripts/razer_devices.py --set-per-key <serial> 0 0 255 0 0
+
+# Set multiple key colors in one batch (JSON array of [row, col, r, g, b])
+python3 scripts/razer_devices.py --set-per-key-batch <serial> '[[0,0,255,0,0],[0,1,0,255,0]]'
+
+# Profile management
+python3 scripts/razer_devices.py --list-profiles
+python3 scripts/razer_devices.py --save-profile "My Profile" '{"name":"My Profile","rows":6,"cols":22,"colors":[...]}'
+python3 scripts/razer_devices.py --load-profile "My Profile"
+python3 scripts/razer_devices.py --delete-profile "My Profile"
 ```
+
+## Profile Storage
+
+Profiles are stored as individual JSON files in `~/.config/omarazer/profiles/`. Each profile is named `<profile-name>.json` (with unsafe characters stripped from the name).
+
+**Profile format:**
+
+```json
+{
+  "name": "My Profile",
+  "rows": 6,
+  "cols": 22,
+  "colors": [
+    "#00ff00", "#00ff00", "#000000", "#ff0000",
+    "#000000", "#000000", "#000000", "#000000",
+    "... one hex color per LED, row-major order ..."
+  ]
+}
+```
+
+- `rows` / `cols` — the LED matrix dimensions at time of save.
+- `colors` — flat array of hex color strings (`#RRGGBB`), one per LED, in row-major order (total length = `rows × cols`).
+- Loading a profile validates that the stored dimensions match the device's current matrix before applying.
 
 ## Running Tests
 

@@ -19,6 +19,15 @@ Panel {
   property int dataVersion: 0
   property bool loading: false
 
+  // Per-key editor state
+  property bool perKeyEditorOpen: false
+  property string perKeyDeviceSerial: ""
+  property string perKeyDeviceName: ""
+  property int perKeyMatrixRows: 0
+  property int perKeyMatrixCols: 0
+  property var perKeyApplied: ({})
+  property var deviceEffects: ({})
+
   readonly property string barIcon: "󰾰"
   readonly property color fg: root.bar ? root.bar.foreground : Color.foreground
   readonly property color dim: Qt.darker(fg, 1.45)
@@ -105,12 +114,28 @@ Panel {
 
   function setEffect(serial, effect, color, color2, param) {
     if (!serial || !effect) return
+    if (serial !== "all") {
+      var ec = Object.assign({}, root.deviceEffects)
+      ec[serial] = effect
+      root.deviceEffects = ec
+    }
     var args = ["python3", pathFromUrl(Qt.resolvedUrl("scripts/razer_devices.py")), "--set-effect", String(serial), String(effect)]
     if (color) args.push(String(color))
     if (color2) args.push(String(color2))
     if (param) args.push(String(param))
+    if (actionProc.running) {
+      actionProc.running = false
+    }
     actionProc.command = args
     actionProc.running = true
+    if (serial !== "all") {
+      var copy = {}
+      var keys = Object.keys(root.perKeyApplied)
+      for (var i = 0; i < keys.length; i++) {
+        if (keys[i] !== serial) copy[keys[i]] = root.perKeyApplied[keys[i]]
+      }
+      root.perKeyApplied = copy
+    }
   }
 
   function restartDaemon() {
@@ -135,6 +160,25 @@ Panel {
       open()
       refresh()
     }
+  }
+
+  // ── Per-key editor ──
+  function openPerKeyEditor(device) {
+    if (!device) return
+    perKeyDeviceSerial = device.serial || ""
+    perKeyDeviceName = device.name || "Keyboard"
+    perKeyMatrixRows = device.matrix_rows || 0
+    perKeyMatrixCols = device.matrix_cols || 0
+    perKeyEditorOpen = true
+  }
+
+  function closePerKeyEditor() {
+    perKeyEditorOpen = false
+    perKeyDeviceSerial = ""
+    perKeyDeviceName = ""
+    perKeyMatrixRows = 0
+    perKeyMatrixCols = 0
+    refresh()
   }
 
   onOpenedChanged: {
@@ -548,7 +592,9 @@ Panel {
             spacing: Style.space(10)
 
             Repeater {
-              model: root.dataVersion >= 0 ? root.razerData.devices : []
+              model: root.dataVersion >= 0 ? (root.razerData.devices || []).slice().sort(function(a, b) {
+                return (a.name || "").localeCompare(b.name || "")
+              }) : []
 
               delegate: BorderSurface {
                 id: deviceCard
@@ -809,73 +855,44 @@ Panel {
 
                       Item { Layout.fillWidth: true }
 
-                      // Active Effect & Color Badge (clickable dropdown toggle)
-                      BorderSurface {
-                        id: activeEffectBadge
-                        color: effectBadgeMouse.containsMouse 
-                          ? Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.14) 
-                          : (deviceCard.isExpanded 
-                              ? Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.12) 
-                              : Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.08))
-                        borderSpec: deviceCard.isExpanded 
-                          ? Border.flat(Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.5), 1) 
-                          : (effectBadgeMouse.containsMouse 
-                              ? Border.flat(Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.2), 1) 
-                              : Border.none())
-                        radius: Style.space(4)
-                        padding: Style.space(4)
-                        implicitWidth: badgeRow.implicitWidth + Style.space(12)
-                        implicitHeight: badgeRow.implicitHeight + Style.space(4)
-                        Layout.alignment: Qt.AlignVCenter
+                      // Elegant effect dropdown toggle (matches refresh button style)
+                      Button {
+                        id: effectDropdownBtn
+                        text: root.perKeyApplied[deviceCard.modelData.serial] ? "Per-Key" : Model.effectDisplayName(deviceCard.modelData.current_effect)
+                        iconText: (root.perKeyApplied[deviceCard.modelData.serial] ? "󰌌" : Model.effectIcon(deviceCard.modelData.current_effect)) + (deviceCard.isExpanded ? " 󰅃" : " 󰅀")
+                        foreground: Color.accent
+                        fontFamily: root.fontFamily
+                        fontSize: Style.font.caption
+                        bordered: true
+                        selected: deviceCard.isExpanded
+                        horizontalPadding: Style.space(8)
+                        verticalPadding: Style.space(4)
+                        onClicked: root.toggleDeviceExpanded(deviceCard.deviceKey)
 
-                        RowLayout {
-                          id: badgeRow
-                          anchors.centerIn: parent
-                          spacing: Style.space(4)
-
-                          Rectangle {
-                            visible: Model.needsColor(deviceCard.modelData.current_effect)
-                            width: Style.space(8)
-                            height: Style.space(8)
-                            radius: width / 2
-                            color: Model.primaryColor(deviceCard.modelData)
-                            Layout.alignment: Qt.AlignVCenter
-                          }
-
-                          Rectangle {
-                            visible: Model.needsSecondaryColor(deviceCard.modelData.current_effect)
-                            width: Style.space(8)
-                            height: Style.space(8)
-                            radius: width / 2
-                            color: Model.secondaryColor(deviceCard.modelData)
-                            Layout.alignment: Qt.AlignVCenter
-                          }
-
-                          Text {
-                            text: Model.effectIcon(deviceCard.modelData.current_effect) + " " + Model.effectDisplayName(deviceCard.modelData.current_effect)
-                            color: Color.accent
-                            font.family: root.fontFamily
-                            font.pixelSize: Style.font.caption
-                            font.bold: true
-                          }
-
-                          Text {
-                            text: deviceCard.isExpanded ? "󰅃" : "󰅀"
-                            color: deviceCard.isExpanded ? Color.accent : root.dim
-                            font.family: root.fontFamily
-                            font.pixelSize: Style.font.caption
-                            Layout.alignment: Qt.AlignVCenter
-                          }
+                        Rectangle {
+                          visible: Model.needsColor(deviceCard.modelData.current_effect)
+                          anchors.right: parent.right
+                          anchors.top: parent.top
+                          anchors.margins: -4
+                          width: Style.space(8)
+                          height: Style.space(8)
+                          radius: width / 2
+                          color: Model.primaryColor(deviceCard.modelData)
+                          border.width: 1
+                          border.color: "#ffffff"
                         }
 
-                        MouseArea {
-                          id: effectBadgeMouse
-                          anchors.fill: parent
-                          hoverEnabled: true
-                          cursorShape: Qt.PointingHandCursor
-                          onClicked: {
-                            root.toggleDeviceExpanded(deviceCard.deviceKey)
-                          }
+                        Rectangle {
+                          visible: Model.needsSecondaryColor(deviceCard.modelData.current_effect)
+                          anchors.right: parent.right
+                          anchors.bottom: parent.top
+                          anchors.margins: -4
+                          width: Style.space(8)
+                          height: Style.space(8)
+                          radius: width / 2
+                          color: Model.secondaryColor(deviceCard.modelData)
+                          border.width: 1
+                          border.color: "#ffffff"
                         }
                       }
                     }
@@ -886,6 +903,59 @@ Panel {
                       visible: deviceCard.isExpanded
                       Layout.fillWidth: true
                       spacing: Style.space(8)
+
+                      // Per-Key Lighting (keyboard-only)
+                      BorderSurface {
+                        visible: Model.hasPerKeyLighting(deviceCard.modelData)
+                        Layout.fillWidth: true
+                        color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.03)
+                        borderSpec: Border.flat(Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.06), 1)
+                        radius: Style.cornerRadius
+                        padding: Style.space(8)
+                        implicitHeight: perKeyRow.implicitHeight + contentTopInset + contentBottomInset
+
+                        RowLayout {
+                          id: perKeyRow
+                          anchors.left: parent.left
+                          anchors.right: parent.right
+                          anchors.top: parent.top
+                          anchors.topMargin: parent.contentTopInset
+                          anchors.rightMargin: parent.contentRightInset
+                          anchors.bottomMargin: parent.contentBottomInset
+                          anchors.leftMargin: parent.contentLeftInset
+                          spacing: Style.space(6)
+
+                          Text {
+                            text: "󰌌"
+                            color: root.dim
+                            font.family: root.fontFamily
+                            font.pixelSize: Style.font.bodySmall
+                            Layout.alignment: Qt.AlignVCenter
+                          }
+
+                          Text {
+                            text: "Per-Key Lighting"
+                            color: root.dim
+                            font.family: root.fontFamily
+                            font.pixelSize: Style.font.caption
+                            Layout.alignment: Qt.AlignVCenter
+                          }
+
+                          Item { Layout.fillWidth: true }
+
+                          Button {
+                            text: "Open"
+                            iconText: "󰒓"
+                            foreground: root.fg
+                            fontFamily: root.fontFamily
+                            fontSize: Style.font.caption
+                            bordered: true
+                            horizontalPadding: Style.space(8)
+                            verticalPadding: Style.space(4)
+                            onClicked: root.openPerKeyEditor(deviceCard.modelData)
+                          }
+                        }
+                      }
 
                       // Categorized Effect Buttons Container
                       BorderSurface {
@@ -953,7 +1023,7 @@ Panel {
 
                                     text: Model.effectDisplayName(effectBtn.modelData)
                                     iconText: Model.effectIcon(effectBtn.modelData)
-                                    selected: Model.isEffectSelected(deviceCard.modelData.current_effect, effectBtn.modelData)
+                                    selected: !root.perKeyApplied[deviceCard.modelData.serial] && Model.isEffectSelected(deviceCard.modelData.current_effect, effectBtn.modelData)
                                     bordered: true
                                     fontFamily: root.fontFamily
                                     fontSize: Style.font.caption
@@ -1056,18 +1126,14 @@ Panel {
                               onClicked: root.setEffect(deviceCard.modelData.serial, "breath_random")
                             }
 
-                            Button {
-                              visible: Model.hasEffect(deviceCard.modelData, "breath_dual")
-                              text: "Dual"
-                              iconText: "󰔄"
-                              fontFamily: root.fontFamily
-                              fontSize: Style.font.caption
-                              bordered: true
-                              selected: String(deviceCard.modelData.current_effect || "").toLowerCase() === "breath_dual"
-                              horizontalPadding: Style.space(6)
-                              verticalPadding: Style.space(2)
-                              onClicked: root.setEffect(deviceCard.modelData.serial, "breath_dual", Model.primaryColor(deviceCard.modelData), Model.secondaryColor(deviceCard.modelData))
-                            }
+                            // TODO: Dual breathing — re-enable when dual color bug is resolved
+                            // Button {
+                            //   visible: Model.hasEffect(deviceCard.modelData, "breath_dual")
+                            //   text: "Dual"
+                            //   iconText: "󰔄"
+                            //   ...
+                            //   onClicked: root.setEffect(deviceCard.modelData.serial, "breath_dual", ...)
+                            // }
                           }
 
                           // Ripple Mode Switcher (Single / Random)
@@ -1169,7 +1235,7 @@ Panel {
 
                           // Primary Color Palette Selector (when active effect uses primary color)
                           RowLayout {
-                            visible: Model.needsColor(deviceCard.modelData.current_effect)
+                          visible: !root.perKeyApplied[deviceCard.modelData.serial] && Model.needsColor(deviceCard.modelData.current_effect)
                             Layout.fillWidth: true
                             spacing: Style.space(6)
 
@@ -1206,8 +1272,9 @@ Panel {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                      var spd = Model.needsSpeed(deviceCard.modelData.current_effect) ? root.getDeviceSpeed(deviceCard.deviceKey) : null
-                                      root.setEffect(deviceCard.modelData.serial, deviceCard.modelData.current_effect || "static", swatch.modelData.hex, Model.secondaryColor(deviceCard.modelData), spd)
+                                      var eff = root.deviceEffects[deviceCard.modelData.serial] || deviceCard.modelData.current_effect || "static"
+                                      var spd = Model.needsSpeed(eff) ? root.getDeviceSpeed(deviceCard.deviceKey) : null
+                                      root.setEffect(deviceCard.modelData.serial, eff, swatch.modelData.hex, Model.secondaryColor(deviceCard.modelData), spd)
                                     }
                                   }
                                 }
@@ -1217,7 +1284,7 @@ Panel {
 
                           // Secondary Color Palette Selector (when active effect uses secondary color)
                           RowLayout {
-                            visible: Model.needsSecondaryColor(deviceCard.modelData.current_effect)
+                          visible: !root.perKeyApplied[deviceCard.modelData.serial] && Model.needsSecondaryColor(deviceCard.modelData.current_effect)
                             Layout.fillWidth: true
                             spacing: Style.space(6)
 
@@ -1254,8 +1321,9 @@ Panel {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                      var spd = Model.needsSpeed(deviceCard.modelData.current_effect) ? root.getDeviceSpeed(deviceCard.deviceKey) : null
-                                      root.setEffect(deviceCard.modelData.serial, deviceCard.modelData.current_effect || "breath_dual", Model.primaryColor(deviceCard.modelData), swatch2.modelData.hex, spd)
+                                      var eff = root.deviceEffects[deviceCard.modelData.serial] || deviceCard.modelData.current_effect || "starlight_dual"
+                                      var spd = Model.needsSpeed(eff) ? root.getDeviceSpeed(deviceCard.deviceKey) : null
+                                      root.setEffect(deviceCard.modelData.serial, eff, Model.primaryColor(deviceCard.modelData), swatch2.modelData.hex, spd)
                                     }
                                   }
                                 }
@@ -1337,9 +1405,10 @@ Panel {
                                 verticalPadding: Style.space(2)
                                 onClicked: {
                                   root.setDeviceSpeed(deviceCard.deviceKey, speedBtn.modelData.value)
+                                  var eff = root.deviceEffects[deviceCard.modelData.serial] || deviceCard.modelData.current_effect || "reactive"
                                   root.setEffect(
                                     deviceCard.modelData.serial,
-                                    deviceCard.modelData.current_effect || "reactive",
+                                    eff,
                                     Model.primaryColor(deviceCard.modelData),
                                     Model.secondaryColor(deviceCard.modelData),
                                     speedBtn.modelData.value
@@ -1373,6 +1442,23 @@ Panel {
           font.pixelSize: Style.font.caption
         }
       }
+    }
+  }
+
+  // Per-Key Lighting Editor (standalone centered window)
+  PerKeyEditor {
+    id: perKeyEditor
+    deviceSerial: root.perKeyEditorOpen ? root.perKeyDeviceSerial : ""
+    deviceName: root.perKeyDeviceName
+    matrixRows: root.perKeyMatrixRows
+    matrixCols: root.perKeyMatrixCols
+    onCloseRequested: root.closePerKeyEditor()
+    onApplied: function(serial) {
+      var copy = {}
+      var keys = Object.keys(root.perKeyApplied)
+      for (var i = 0; i < keys.length; i++) copy[keys[i]] = root.perKeyApplied[keys[i]]
+      copy[serial] = true
+      root.perKeyApplied = copy
     }
   }
 }

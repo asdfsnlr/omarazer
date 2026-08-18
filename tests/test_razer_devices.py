@@ -1,13 +1,13 @@
 import unittest
 from unittest.mock import MagicMock
-from scripts.razer_devices import (
+from scripts.helpers import (
     classify_device_type,
     parse_color,
     parse_speed,
     parse_direction,
     normalize_effect_name,
-    get_device_info,
 )
+from scripts.devices import get_device_info
 
 class TestRazerDevices(unittest.TestCase):
     def test_classify_device_type(self):

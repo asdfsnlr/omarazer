@@ -234,7 +234,8 @@ function needsColor(effect) {
 
 function needsSecondaryColor(effect) {
   var e = String(effect || "").toLowerCase().replace(/-/g, "_")
-  return e === "breath_dual" || e === "starlight_dual"
+  // TODO: re-add "breath_dual" when dual breathing bug is resolved
+  return e === "starlight_dual"
 }
 
 function needsDirection(effect) {
@@ -506,6 +507,101 @@ function hasCustomizationOptions(device) {
   return false
 }
 
+function hasPerKeyLighting(device) {
+  if (!device) return false
+  return device.has_per_key === true && device.type === "keyboard" || device.type === "keypad"
+}
+
+function deviceOrderFromSettings(settings) {
+  if (!settings || typeof settings !== "object") return []
+  var v = settings.deviceOrder
+  if (Array.isArray(v)) return v
+  return []
+}
+
+function applyDeviceOrder(devices, order) {
+  if (!Array.isArray(devices) || devices.length === 0) return []
+  if (!Array.isArray(order) || order.length === 0) return devices.slice()
+
+  var bySerial = {}
+  for (var i = 0; i < devices.length; i++) {
+    var d = devices[i]
+    if (d && d.serial) bySerial[String(d.serial).toLowerCase()] = d
+  }
+
+  var sorted = []
+  for (var j = 0; j < order.length; j++) {
+    var key = String(order[j] || "").toLowerCase()
+    if (bySerial[key]) {
+      sorted.push(bySerial[key])
+      delete bySerial[key]
+    }
+  }
+
+  var remaining = Object.keys(bySerial)
+  for (var k = 0; k < remaining.length; k++) {
+    if (bySerial[remaining[k]]) sorted.push(bySerial[remaining[k]])
+  }
+
+  return sorted
+}
+
+function settingsDeviceOrder(devices) {
+  if (!Array.isArray(devices)) return []
+  var order = []
+  for (var i = 0; i < devices.length; i++) {
+    if (devices[i] && devices[i].serial) {
+      order.push(String(devices[i].serial))
+    }
+  }
+  return order
+}
+
+function isKeyboardType(device) {
+  if (!device) return false
+  var t = String(device.type || "").toLowerCase()
+  return t === "keyboard" || t === "keypad"
+}
+
+// Key label mapping: (row, col) -> display label
+// Based on OpenRazer daemon KEY_MAPPING for standard full-size / TKL keyboards
+var _keyMap = null
+function keyLabel(row, col) {
+  if (_keyMap === null) {
+    _keyMap = {}
+    var m = {
+      "0,1": "Esc", "0,3": "F1", "0,4": "F2", "0,5": "F3", "0,6": "F4",
+      "0,7": "F5", "0,8": "F6", "0,9": "F7", "0,10": "F8",
+      "0,11": "F9", "0,12": "F10", "0,13": "F11", "0,14": "F12",
+      "0,15": "Prt", "0,16": "Slk", "0,17": "Pau",
+      "1,0": "M1", "1,1": "`", "1,2": "1", "1,3": "2", "1,4": "3",
+      "1,5": "4", "1,6": "5", "1,7": "6", "1,8": "7", "1,9": "8",
+      "1,10": "9", "1,11": "0", "1,12": "-", "1,13": "=",
+      "1,14": "Bksp", "1,15": "Ins", "1,16": "Hm", "1,17": "PUp",
+      "2,0": "M2", "2,1": "Tab", "2,2": "Q", "2,3": "W", "2,4": "E",
+      "2,5": "R", "2,6": "T", "2,7": "Y", "2,8": "U", "2,9": "I",
+      "2,10": "O", "2,11": "P", "2,12": "[", "2,13": "]",
+      "2,15": "Del", "2,16": "End", "2,17": "PDn",
+      "3,0": "M3", "3,1": "Caps", "3,2": "A", "3,3": "S", "3,4": "D",
+      "3,5": "F", "3,6": "G", "3,7": "H", "3,8": "J", "3,9": "K",
+      "3,10": "L", "3,11": ";", "3,12": "'", "3,13": "#",
+      "3,14": "Ret",
+      "4,0": "M4", "4,1": "Sft", "4,2": "\\", "4,3": "Z", "4,4": "X",
+      "4,5": "C", "4,6": "V", "4,7": "B", "4,8": "N", "4,9": "M",
+      "4,10": ",", "4,11": ".", "4,12": "/",
+      "4,14": "RSft", "4,16": "\u2191",
+      "5,0": "M5", "5,1": "Ctrl", "5,2": "Super", "5,3": "LAlt",
+      "5,7": "Space",
+      "5,11": "RAlt", "5,12": "Fn", "5,13": "Menu", "5,14": "RCtrl",
+      "5,15": "\u2190", "5,16": "\u2193", "5,17": "\u2192"
+    }
+    for (var k in m) {
+      if (m.hasOwnProperty(k)) _keyMap[k] = m[k]
+    }
+  }
+  return _keyMap[row + "," + col] || ""
+}
+
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     parseData: parseData,
@@ -546,6 +642,12 @@ if (typeof module !== "undefined" && module.exports) {
     categoryIcon: categoryIcon,
     isEffectSelected: isEffectSelected,
     categorizedEffects: categorizedEffects,
-    hasCustomizationOptions: hasCustomizationOptions
+    hasCustomizationOptions: hasCustomizationOptions,
+    hasPerKeyLighting: hasPerKeyLighting,
+    deviceOrderFromSettings: deviceOrderFromSettings,
+    applyDeviceOrder: applyDeviceOrder,
+    settingsDeviceOrder: settingsDeviceOrder,
+    isKeyboardType: isKeyboardType,
+    keyLabel: keyLabel
   }
 }
