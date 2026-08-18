@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "asdfsnlr.omarazer",
   "name": "OmaRazer",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "author": "asdfsnlr",
   "license": "MIT",
   "description": "An Omarchy shell bar widget and panel plugin that connects to the OpenRazer daemon to monitor and manage connected peripherals (keyboards, mice, mousemats, headsets, and accessories) with battery status, RGB lighting effects, brightness, and polling rate controls.",
@@ -21,7 +21,8 @@
     "defaults": {
       "pollIntervalSec": 30,
       "refreshIntervalSec": 30,
-      "showCountInBar": true
+      "showCountInBar": true,
+      "enableNotifications": true
     },
     "schema": [
       {
@@ -46,6 +47,12 @@
         "key": "showCountInBar",
         "type": "boolean",
         "label": "Show device count in bar",
+        "defaultValue": true
+      },
+      {
+        "key": "enableNotifications",
+        "type": "boolean",
+        "label": "Desktop notifications for device connect/disconnect",
         "defaultValue": true
       }
     ]

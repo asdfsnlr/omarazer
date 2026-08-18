@@ -236,6 +236,25 @@ omarchy plugin validate .
 qmllint -I /usr/share/omarchy/shell ./Panel.qml
 ```
 
+## Updates
+
+### August 17, 2026
+- Implemented per-key lighting profile system (save / load / delete)
+- Profiles section relocated to top of per-key editor (after header, before color palette)
+- Profiles row redesigned with Dropdown + New + Save + Delete + Cancel layout
+- Added spacing between controls and matrix grid; centered matrix horizontally
+- Python backend split into 5 modules: `helpers.py`, `devices.py`, `effects.py`, `perkey.py`, `profiles.py` with `razer_devices.py` as thin CLI wrapper
+- Fixed Python module imports with `sys.path.insert` in `razer_devices.py`
+- Device connect/disconnect desktop notifications with freedesktop icon names
+- Notification toggle button added to panel header
+
+### August 18, 2026
+- Model.js split into 9 sub-modules, then flattened back to single file for QML `import` compatibility
+- Panel.qml refactored from ~1500 lines to ~430 lines by extracting 6 components into `ui/` directory: PanelHeader, GlobalControls, ErrorState, EmptyState, DeviceCard, EffectOptions
+- Fixed QML directory import issues (`import "ui"` + bare type names, missing `import qs.Ui`)
+- Expanded color palette from 10 to 51 colors across 4 tiers: Neutrals, Saturated Spectrum, Pastels, Dark Tones
+- Added descriptive comments throughout Panel.qml and Model.js (JSDoc, section headers, property docs)
+
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.

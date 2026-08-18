@@ -6,7 +6,7 @@ import Quickshell.Wayland
 import Quickshell.Io
 import qs.Commons
 import qs.Ui
-import "Model.js" as Model
+import "../Model.js" as Model
 
 PanelWindow {
   id: root
@@ -176,12 +176,12 @@ PanelWindow {
     }
     if (keys.length === 0) return
     var jsonPayload = JSON.stringify(keys)
-    applyProc.command = ["python3", pathFromUrl(Qt.resolvedUrl("scripts/razer_devices.py")), "--set-per-key-batch", deviceSerial, jsonPayload]
+    applyProc.command = ["python3", pathFromUrl(Qt.resolvedUrl("../scripts/razer_devices.py")), "--set-per-key-batch", deviceSerial, jsonPayload]
     applyProc.running = true
   }
 
   function fetchProfiles() {
-    profileListProc.command = ["python3", pathFromUrl(Qt.resolvedUrl("scripts/razer_devices.py")), "--list-profiles"]
+    profileListProc.command = ["python3", pathFromUrl(Qt.resolvedUrl("../scripts/razer_devices.py")), "--list-profiles"]
     profileListProc.running = true
   }
 
@@ -193,19 +193,19 @@ PanelWindow {
       cols: matrixCols,
       colors: matrixState.slice()
     }
-    saveProfileProc.command = ["python3", pathFromUrl(Qt.resolvedUrl("scripts/razer_devices.py")), "--save-profile", name.trim(), JSON.stringify(data)]
+    saveProfileProc.command = ["python3", pathFromUrl(Qt.resolvedUrl("../scripts/razer_devices.py")), "--save-profile", name.trim(), JSON.stringify(data)]
     saveProfileProc.running = true
   }
 
   function loadProfile(name) {
     if (!name) return
-    loadProfileProc.command = ["python3", pathFromUrl(Qt.resolvedUrl("scripts/razer_devices.py")), "--load-profile", name]
+    loadProfileProc.command = ["python3", pathFromUrl(Qt.resolvedUrl("../scripts/razer_devices.py")), "--load-profile", name]
     loadProfileProc.running = true
   }
 
   function deleteProfile(name) {
     if (!name) return
-    deleteProfileProc.command = ["python3", pathFromUrl(Qt.resolvedUrl("scripts/razer_devices.py")), "--delete-profile", name]
+    deleteProfileProc.command = ["python3", pathFromUrl(Qt.resolvedUrl("../scripts/razer_devices.py")), "--delete-profile", name]
     deleteProfileProc.running = true
   }
 
@@ -213,7 +213,7 @@ PanelWindow {
     if (!deviceSerial) return
     loading = true
     errorMessage = ""
-    dimsProc.command = ["python3", pathFromUrl(Qt.resolvedUrl("scripts/razer_devices.py")), "--get-matrix-dims", deviceSerial]
+    dimsProc.command = ["python3", pathFromUrl(Qt.resolvedUrl("../scripts/razer_devices.py")), "--get-matrix-dims", deviceSerial]
     dimsProc.running = true
   }
 

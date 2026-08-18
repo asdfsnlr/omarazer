@@ -1,3 +1,31 @@
+// ──────────────────────────────────────────────────────────────────────────────
+// OmaRazer — Model.js
+// Shared logic module for the OmaRazer Omarchy shell plugin.
+// Contains all pure helper functions used by Panel.qml and ui/*.qml:
+//   - Data parsing & daemon response handling
+//   - Device type detection & icon mapping
+//   - Battery, DPI, brightness, poll-rate formatting
+//   - Effect system (display names, icons, categories, availability)
+//   - Color palette & per-device color management
+//   - Speed levels & effect parameter helpers
+//   - Per-key lighting helpers & keyboard key-label mapping
+//   - Device ordering & persistent settings helpers
+//   - Desktop notification helpers (connect/disconnect detection)
+//
+// Imported as: import "Model.js" as Model
+// Also consumed by Node.js tests via module.exports at the bottom.
+// ──────────────────────────────────────────────────────────────────────────────
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA PARSING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Parse raw JSON output from the OpenRazer daemon CLI.
+ * Returns a normalized object: { daemon_running, version, device_count, devices, error }
+ * Falls back to an empty/error state on parse failure or empty input.
+ */
 function parseData(raw) {
   if (!raw) return { daemon_running: false, version: "", device_count: 0, devices: [], error: "No data" }
   try {
@@ -15,6 +43,16 @@ function parseData(raw) {
   return { daemon_running: false, version: "", device_count: 0, devices: [], error: "Failed to parse data" }
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DEVICE TYPE DETECTION & ICONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Return a Nerd Font icon character for a device type or device object.
+ * Accepts either a device object ({ type, name }) or separate type/name strings.
+ * Matches both the OpenRazer type field and known product name substrings.
+ */
 function deviceTypeIcon(typeOrDevice, name) {
   var type = ""
   var devName = ""
@@ -42,6 +80,12 @@ function deviceTypeIcon(typeOrDevice, name) {
   return "󰒋"
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BATTERY STATUS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Return a battery level icon (Nerd Font) based on percentage and charging state. */
 function batteryIcon(level, isCharging) {
   if (isCharging) return "󰂄"
   if (level === null || level === undefined || level < 0) return ""
@@ -54,6 +98,7 @@ function batteryIcon(level, isCharging) {
   return "󰂎"
 }
 
+/** Return a color hex string for battery level (green/yellow/red). */
 function batteryColor(level, isCharging) {
   if (isCharging) return "#22c55e"
   if (level === null || level === undefined || level < 0) return ""
@@ -63,6 +108,15 @@ function batteryColor(level, isCharging) {
   return "#22c55e"
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BAR BUTTON FORMATTING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Format the text shown in the bar widget button.
+ * Shows the icon + device count, or just the icon, or icon + "!" on error.
+ */
 function formatBarText(data, showCount) {
   var icon = "󰾰"
   if (!data || !data.daemon_running) return icon + " !"
@@ -73,12 +127,19 @@ function formatBarText(data, showCount) {
   return icon
 }
 
+/** Capitalize the first letter of a device type string (e.g. "keyboard" -> "Keyboard"). */
 function formatDeviceType(type) {
   var t = String(type || "").trim()
   if (!t) return "Accessory"
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DEVICE METRICS FORMATTING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Format DPI value(s) as a display string (e.g. "16000 DPI" or "800 x 1600 DPI"). */
 function formatDpi(dpi) {
   if (Array.isArray(dpi)) {
     if (dpi.length === 2 && dpi[0] === dpi[1]) return dpi[0] + " DPI"
@@ -89,6 +150,7 @@ function formatDpi(dpi) {
   return ""
 }
 
+/** Format polling rate as "NNN Hz". */
 function formatPollRate(pollRate) {
   if (typeof pollRate === "number" && pollRate > 0) {
     return Math.round(pollRate) + " Hz"
@@ -96,6 +158,7 @@ function formatPollRate(pollRate) {
   return ""
 }
 
+/** Get the list of supported polling rates for a device, with sensible defaults. */
 function supportedPollRates(device) {
   if (device && Array.isArray(device.supported_poll_rates) && device.supported_poll_rates.length > 0) {
     return device.supported_poll_rates
@@ -106,11 +169,13 @@ function supportedPollRates(device) {
   return []
 }
 
+/** Format daemon version string for the header subtitle. */
 function formatDaemonVersion(version) {
   if (!version) return ""
   return "Installed OpenRazer Daemon v" + version
 }
 
+/** Check if any device in the list supports brightness control. */
 function hasBrightnessSupport(devices) {
   if (!Array.isArray(devices)) return false
   for (var i = 0; i < devices.length; i++) {
@@ -119,6 +184,7 @@ function hasBrightnessSupport(devices) {
   return false
 }
 
+/** Calculate the average brightness across all devices that report it. */
 function averageBrightness(devices) {
   if (!Array.isArray(devices) || devices.length === 0) return 100
   var sum = 0
@@ -133,6 +199,7 @@ function averageBrightness(devices) {
   return count > 0 ? Math.round(sum / count) : 100
 }
 
+/** Format a brightness value as a percentage string (e.g. "75%"). */
 function formatBrightness(val) {
   if (val !== null && val !== undefined && !isNaN(Number(val))) {
     return Math.round(Number(val)) + "%"
@@ -140,6 +207,7 @@ function formatBrightness(val) {
   return ""
 }
 
+/** Read the poll interval from user settings, with a fallback default (seconds). */
 function getPollInterval(settings, defaultVal) {
   var d = (typeof defaultVal === "number" && defaultVal >= 5) ? defaultVal : 30
   if (!settings || typeof settings !== "object") return d
@@ -152,6 +220,7 @@ function getPollInterval(settings, defaultVal) {
   return d
 }
 
+/** Generate a human-readable summary of device status (shown in bar tooltip + header). */
 function summaryText(data) {
   if (!data || !data.daemon_running) {
     return data && data.error ? data.error : "OpenRazer daemon not running"
@@ -162,6 +231,133 @@ function summaryText(data) {
   return count + " devices connected"
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COLOR PALETTE & DEVICE COLORS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Return the full color palette array (51 colors) for the effect color pickers.
+ * Organized in rows: Neutrals, Saturated spectrum, Pastels, Dark tones.
+ * Each entry: { name: string, hex: string }
+ */
+function paletteColors() {
+  return [
+    // ── Neutrals ──
+    { name: "White", hex: "#ffffff" },
+    { name: "Snow", hex: "#f5f5f5" },
+    { name: "Silver", hex: "#c0c0c0" },
+    { name: "Gray", hex: "#666666" },
+    { name: "Charcoal", hex: "#333333" },
+
+    // ── Saturated Spectrum ──
+    { name: "Razer Green", hex: "#00ff00" },
+    { name: "Emerald", hex: "#10b981" },
+    { name: "Mint", hex: "#34d399" },
+    { name: "Teal", hex: "#14b8a6" },
+    { name: "Cyan", hex: "#00e5ff" },
+    { name: "Aqua", hex: "#06b6d4" },
+    { name: "Sky", hex: "#38bdf8" },
+    { name: "Blue", hex: "#2563eb" },
+    { name: "Cobalt", hex: "#1d4ed8" },
+    { name: "Indigo", hex: "#6366f1" },
+    { name: "Purple", hex: "#8000ff" },
+    { name: "Violet", hex: "#a855f7" },
+    { name: "Lavender", hex: "#c084fc" },
+    { name: "Magenta", hex: "#d946ef" },
+    { name: "Pink", hex: "#ec4899" },
+    { name: "Rose", hex: "#f43f5e" },
+    { name: "Red", hex: "#ef4444" },
+    { name: "Crimson", hex: "#dc2626" },
+    { name: "Vermillion", hex: "#e11d48" },
+    { name: "Orange", hex: "#f97316" },
+    { name: "Amber", hex: "#f59e0b" },
+    { name: "Yellow", hex: "#eab308" },
+    { name: "Lime", hex: "#84cc16" },
+
+    // ── Pastels ──
+    { name: "Pastel Green", hex: "#86efac" },
+    { name: "Pastel Teal", hex: "#99f6e4" },
+    { name: "Pastel Cyan", hex: "#67e8f9" },
+    { name: "Pastel Blue", hex: "#93c5fd" },
+    { name: "Pastel Indigo", hex: "#a5b4fc" },
+    { name: "Pastel Purple", hex: "#c4b5fd" },
+    { name: "Pastel Lavender", hex: "#d8b4fe" },
+    { name: "Pastel Pink", hex: "#f9a8d4" },
+    { name: "Pastel Red", hex: "#fca5a5" },
+    { name: "Pastel Orange", hex: "#fdba74" },
+    { name: "Pastel Yellow", hex: "#fde047" },
+    { name: "Pastel Lime", hex: "#d9f99d" },
+
+    // ── Dark Tones ──
+    { name: "Dark Green", hex: "#065f46" },
+    { name: "Dark Teal", hex: "#115e59" },
+    { name: "Dark Cyan", hex: "#0e7490" },
+    { name: "Dark Blue", hex: "#1e3a5f" },
+    { name: "Dark Indigo", hex: "#312e81" },
+    { name: "Dark Purple", hex: "#581c87" },
+    { name: "Dark Pink", hex: "#9d174d" },
+    { name: "Dark Red", hex: "#7f1d1d" },
+    { name: "Dark Orange", hex: "#9a3412" },
+    { name: "Warm White", hex: "#fef3c7" },
+    { name: "Cool White", hex: "#e0f2fe" }
+  ]
+}
+
+/** Get the primary color for a device (from its color array or fallback to Razer Green). */
+function primaryColor(device) {
+  if (!device) return "#00ff00"
+  if (Array.isArray(device.colors) && device.colors.length > 0 && device.colors[0]) {
+    return device.colors[0]
+  }
+  if (device.primary_color) return device.primary_color
+  return "#00ff00"
+}
+
+/** Get the secondary color for a device (from its color array or fallback to Cyan). */
+function secondaryColor(device) {
+  if (!device) return "#00e5ff"
+  if (Array.isArray(device.colors) && device.colors.length > 1 && device.colors[1]) {
+    return device.colors[1]
+  }
+  if (device.secondary_color) return device.secondary_color
+  return "#00e5ff"
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EFFECT SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Return available speed levels for an effect type (reactive has 4 levels, others have 3). */
+function speedLevels(effect) {
+  var e = String(effect || "").toLowerCase().replace(/-/g, "_")
+  if (e === "reactive") {
+    return [
+      { value: "1", label: "Fast", icon: "󱐋", desc: "Fast reaction (500ms)" },
+      { value: "2", label: "Normal", icon: "󰓅", desc: "Normal reaction (1000ms)" },
+      { value: "3", label: "Slow", icon: "󰾆", desc: "Slow reaction (1500ms)" },
+      { value: "4", label: "Very Slow", icon: "󰄰", desc: "Very Slow reaction (2000ms)" }
+    ]
+  }
+  return [
+    { value: "1", label: "Fast", icon: "󱐋", desc: "Fast animation speed" },
+    { value: "2", label: "Normal", icon: "󰓅", desc: "Normal animation speed" },
+    { value: "3", label: "Slow", icon: "󰾆", desc: "Slow animation speed" }
+  ]
+}
+
+/** Format a speed value ("1"-"4") as a human-readable label. */
+function formatSpeed(speedVal) {
+  var s = String(speedVal || "2").toLowerCase().trim()
+  if (s === "1" || s === "fast") return "Fast"
+  if (s === "2" || s === "normal" || s === "medium" || s === "med") return "Normal"
+  if (s === "3" || s === "slow") return "Slow"
+  if (s === "4" || s === "very_slow" || s === "veryslow") return "Very Slow"
+  return "Normal"
+}
+
+/** Convert an internal effect name to a human-readable display label. */
 function effectDisplayName(effect) {
   var e = String(effect || "").toLowerCase().replace(/-/g, "_")
   if (e === "none" || e === "off") return "Off"
@@ -181,6 +377,7 @@ function effectDisplayName(effect) {
   return e.charAt(0).toUpperCase() + e.slice(1).replace(/_/g, " ")
 }
 
+/** Return a Nerd Font icon for an effect name. */
 function effectIcon(effect) {
   var e = String(effect || "").toLowerCase().replace(/-/g, "_")
   if (e === "none" || e === "off") return "󰚌"
@@ -194,101 +391,50 @@ function effectIcon(effect) {
   return "󰌵"
 }
 
-function paletteColors() {
-  return [
-    { name: "Razer Green", hex: "#00ff00" },
-    { name: "Emerald", hex: "#10b981" },
-    { name: "Cyan", hex: "#00e5ff" },
-    { name: "Blue", hex: "#2563eb" },
-    { name: "Purple", hex: "#8000ff" },
-    { name: "Pink", hex: "#ec4899" },
-    { name: "Red", hex: "#ef4444" },
-    { name: "Orange", hex: "#f97316" },
-    { name: "Yellow", hex: "#eab308" },
-    { name: "White", hex: "#ffffff" }
-  ]
-}
-
-function primaryColor(device) {
-  if (!device) return "#00ff00"
-  if (Array.isArray(device.colors) && device.colors.length > 0 && device.colors[0]) {
-    return device.colors[0]
-  }
-  if (device.primary_color) return device.primary_color
-  return "#00ff00"
-}
-
-function secondaryColor(device) {
-  if (!device) return "#00e5ff"
-  if (Array.isArray(device.colors) && device.colors.length > 1 && device.colors[1]) {
-    return device.colors[1]
-  }
-  if (device.secondary_color) return device.secondary_color
-  return "#00e5ff"
-}
-
+/** Check if an effect requires a primary color parameter. */
 function needsColor(effect) {
   var e = String(effect || "").toLowerCase().replace(/-/g, "_")
   return e === "static" || e === "breath_single" || e === "breath" || e === "breathing" || e === "breath_dual" || e === "reactive" || e === "ripple" || e === "starlight_single" || e === "starlight_dual"
 }
 
+/** Check if an effect requires a secondary color parameter. Currently only starlight_dual. */
 function needsSecondaryColor(effect) {
   var e = String(effect || "").toLowerCase().replace(/-/g, "_")
   // TODO: re-add "breath_dual" when dual breathing bug is resolved
   return e === "starlight_dual"
 }
 
+/** Check if an effect requires a direction parameter (currently only wave). */
 function needsDirection(effect) {
   var e = String(effect || "").toLowerCase().replace(/-/g, "_")
   return e === "wave"
 }
 
+/** Check if an effect requires a speed parameter (reactive, starlight, ripple). */
 function needsSpeed(effect) {
   var e = String(effect || "").toLowerCase().replace(/-/g, "_")
   return e === "reactive" || e.indexOf("starlight") === 0 || e.indexOf("ripple") === 0
 }
 
+/** Check if an effect is any breathing variant. */
 function isBreathingEffect(effect) {
   var e = String(effect || "").toLowerCase().replace(/-/g, "_")
   return e.indexOf("breath") === 0
 }
 
+/** Check if an effect is any ripple variant. */
 function isRippleEffect(effect) {
   var e = String(effect || "").toLowerCase().replace(/-/g, "_")
   return e.indexOf("ripple") === 0
 }
 
+/** Check if an effect is any starlight variant. */
 function isStarlightEffect(effect) {
   var e = String(effect || "").toLowerCase().replace(/-/g, "_")
   return e.indexOf("starlight") === 0
 }
 
-function speedLevels(effect) {
-  var e = String(effect || "").toLowerCase().replace(/-/g, "_")
-  if (e === "reactive") {
-    return [
-      { value: "1", label: "Fast", icon: "󱐋", desc: "Fast reaction (500ms)" },
-      { value: "2", label: "Normal", icon: "󰓅", desc: "Normal reaction (1000ms)" },
-      { value: "3", label: "Slow", icon: "󰾆", desc: "Slow reaction (1500ms)" },
-      { value: "4", label: "Very Slow", icon: "󰄰", desc: "Very Slow reaction (2000ms)" }
-    ]
-  }
-  return [
-    { value: "1", label: "Fast", icon: "󱐋", desc: "Fast animation speed" },
-    { value: "2", label: "Normal", icon: "󰓅", desc: "Normal animation speed" },
-    { value: "3", label: "Slow", icon: "󰾆", desc: "Slow animation speed" }
-  ]
-}
-
-function formatSpeed(speedVal) {
-  var s = String(speedVal || "2").toLowerCase().trim()
-  if (s === "1" || s === "fast") return "Fast"
-  if (s === "2" || s === "normal" || s === "medium" || s === "med") return "Normal"
-  if (s === "3" || s === "slow") return "Slow"
-  if (s === "4" || s === "very_slow" || s === "veryslow") return "Very Slow"
-  return "Normal"
-}
-
+/** Return the default supported effects list for a device type (used when daemon doesn't report them). */
 function defaultEffectsForType(type) {
   var t = String(type || "").toLowerCase().trim()
   if (t === "keyboard") {
@@ -312,6 +458,11 @@ function defaultEffectsForType(type) {
   return ["static", "spectrum", "breath_single", "none"]
 }
 
+/**
+ * Get the normalized, deduplicated list of available effects for a device.
+ * Accepts a device object, effects array, or type string.
+ * Effects are ordered by a priority list (static first, none last).
+ */
 function availableEffects(deviceOrEffects, deviceType) {
   var rawEffects = null
   var type = ""
@@ -329,6 +480,7 @@ function availableEffects(deviceOrEffects, deviceType) {
     rawEffects = defaultEffectsForType(type)
   }
 
+  // Canonical ordering for consistent UI display
   var priority = [
     "static",
     "spectrum",
@@ -345,6 +497,7 @@ function availableEffects(deviceOrEffects, deviceType) {
     "none"
   ]
 
+  // Normalize names: lowercase, replace hyphens with underscores, alias common variants
   var list = []
   var normalized = []
   for (var i = 0; i < rawEffects.length; i++) {
@@ -356,6 +509,7 @@ function availableEffects(deviceOrEffects, deviceType) {
     }
   }
 
+  // Sort by priority order, then append any unknown effects at the end
   for (var p = 0; p < priority.length; p++) {
     if (normalized.indexOf(priority[p]) !== -1) {
       list.push(priority[p])
@@ -371,6 +525,7 @@ function availableEffects(deviceOrEffects, deviceType) {
   return list
 }
 
+/** Check if a device supports a specific effect by name. */
 function hasEffect(device, effectName) {
   if (!device) return false
   var list = availableEffects(device)
@@ -385,10 +540,12 @@ function hasEffect(device, effectName) {
   return false
 }
 
+/** Alias for availableEffects — normalizes and deduplicates an effects list. */
 function sanitizeEffectsList(effects, deviceType) {
   return availableEffects(effects, deviceType)
 }
 
+/** Categorize an effect into "presets", "dynamic", or "interactive". */
 function effectCategory(effect) {
   var e = String(effect || "").toLowerCase().replace(/-/g, "_")
   if (e === "static" || e === "spectrum" || e === "spectrumcycling" || e === "spectrum_cycling" || e === "none" || e === "off") {
@@ -403,6 +560,7 @@ function effectCategory(effect) {
   return "presets"
 }
 
+/** Return the display label for an effect category. */
 function categoryDisplayName(category) {
   var c = String(category || "").toLowerCase()
   if (c === "presets" || c === "basic") return "Presets"
@@ -411,6 +569,7 @@ function categoryDisplayName(category) {
   return "Effects"
 }
 
+/** Return a Nerd Font icon for an effect category. */
 function categoryIcon(category) {
   var c = String(category || "").toLowerCase()
   if (c === "presets" || c === "basic") return "󰏘"
@@ -419,6 +578,10 @@ function categoryIcon(category) {
   return "󰌵"
 }
 
+/**
+ * Check if a button's effect matches the device's current active effect.
+ * Handles sub-mode consolidation (e.g. "breath_single" matches any "breath_*" effect).
+ */
 function isEffectSelected(currentEffect, buttonEffect) {
   var curr = String(currentEffect || "").toLowerCase().replace(/-/g, "_")
   var btn = String(buttonEffect || "").toLowerCase().replace(/-/g, "_")
@@ -440,6 +603,12 @@ function isEffectSelected(currentEffect, buttonEffect) {
   return curr === btn
 }
 
+/**
+ * Group available effects into categorized sections for the UI.
+ * Sub-modes (breath_random, ripple_random, etc.) are consolidated into
+ * their primary base effect button to avoid clutter.
+ * Returns: [{ id, label, icon, effects: [string] }]
+ */
 function categorizedEffects(deviceOrEffects, deviceType) {
   var avail = availableEffects(deviceOrEffects, deviceType)
   var deviceObj = (deviceOrEffects && typeof deviceOrEffects === "object" && !Array.isArray(deviceOrEffects)) ? deviceOrEffects : null
@@ -489,6 +658,7 @@ function categorizedEffects(deviceOrEffects, deviceType) {
     }
   }
 
+  // Only return categories that have at least one effect
   var result = []
   for (var k = 0; k < categories.length; k++) {
     if (categories[k].effects.length > 0) {
@@ -498,6 +668,7 @@ function categorizedEffects(deviceOrEffects, deviceType) {
   return result
 }
 
+/** Check if a device's current effect has customizable parameters (color, speed, direction). */
 function hasCustomizationOptions(device) {
   if (!device) return false
   var eff = device.current_effect
@@ -507,11 +678,12 @@ function hasCustomizationOptions(device) {
   return false
 }
 
-function hasPerKeyLighting(device) {
-  if (!device) return false
-  return device.has_per_key === true && device.type === "keyboard" || device.type === "keypad"
-}
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// DEVICE ORDERING & SETTINGS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Read the saved device order (serial array) from user settings. */
 function deviceOrderFromSettings(settings) {
   if (!settings || typeof settings !== "object") return []
   var v = settings.deviceOrder
@@ -519,6 +691,10 @@ function deviceOrderFromSettings(settings) {
   return []
 }
 
+/**
+ * Reorder a device array according to a saved serial order.
+ * Devices not in the order list are appended at the end.
+ */
 function applyDeviceOrder(devices, order) {
   if (!Array.isArray(devices) || devices.length === 0) return []
   if (!Array.isArray(order) || order.length === 0) return devices.slice()
@@ -538,6 +714,7 @@ function applyDeviceOrder(devices, order) {
     }
   }
 
+  // Append any devices not found in the saved order
   var remaining = Object.keys(bySerial)
   for (var k = 0; k < remaining.length; k++) {
     if (bySerial[remaining[k]]) sorted.push(bySerial[remaining[k]])
@@ -546,6 +723,7 @@ function applyDeviceOrder(devices, order) {
   return sorted
 }
 
+/** Extract the current serial order from a device array (for saving to settings). */
 function settingsDeviceOrder(devices) {
   if (!Array.isArray(devices)) return []
   var order = []
@@ -557,14 +735,29 @@ function settingsDeviceOrder(devices) {
   return order
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PER-KEY LIGHTING HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Check if a device supports per-key RGB lighting control. */
+function hasPerKeyLighting(device) {
+  if (!device) return false
+  return device.has_per_key === true && device.type === "keyboard" || device.type === "keypad"
+}
+
+/** Check if a device type is a keyboard or keypad (for per-key editor availability). */
 function isKeyboardType(device) {
   if (!device) return false
   var t = String(device.type || "").toLowerCase()
   return t === "keyboard" || t === "keypad"
 }
 
-// Key label mapping: (row, col) -> display label
-// Based on OpenRazer daemon KEY_MAPPING for standard full-size / TKL keyboards
+/**
+ * Key label mapping: (row, col) -> display label for the per-key editor grid.
+ * Based on OpenRazer daemon KEY_MAPPING for standard full-size / TKL keyboards.
+ * Lazy-initialized on first call for performance.
+ */
 var _keyMap = null
 function keyLabel(row, col) {
   if (_keyMap === null) {
@@ -602,7 +795,67 @@ function keyLabel(row, col) {
   return _keyMap[row + "," + col] || ""
 }
 
-if (typeof module !== "undefined" && module.exports) {
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NOTIFICATION HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Build a serial -> name map from a device array.
+ * Used as a snapshot to detect connect/disconnect changes between polls.
+ */
+function buildDeviceMap(devices) {
+  var map = {}
+  if (!devices) return map
+  for (var i = 0; i < devices.length; i++) {
+    var d = devices[i]
+    if (d.serial) map[d.serial] = d.name
+  }
+  return map
+}
+
+/** Return a freedesktop icon name for a device type (used in desktop notifications). */
+function deviceNotificationIcon(type) {
+  var t = String(type || "").toLowerCase()
+  if (t === "keyboard" || t === "keypad") return "input-keyboard"
+  if (t === "mouse") return "input-mouse"
+  if (t === "headset" || t === "headphones") return "audio-headphones"
+  if (t === "speaker" || t === "speakers" || t === "soundbar") return "audio-speakers"
+  if (t === "mousemat" || t === "mat" || t === "pad") return "input-gaming"
+  return "preferences-desktop-peripherals"
+}
+
+/**
+ * Compare a previous device map snapshot against current devices.
+ * Returns an array of change events: { type, name, icon, message }
+ * where type is "connected" or "disconnected".
+ */
+function detectDeviceChanges(prevMap, devices) {
+  var changes = []
+  if (!prevMap || !devices) return changes
+  var currentSerials = {}
+  for (var i = 0; i < devices.length; i++) {
+    var d = devices[i]
+    if (d.serial) currentSerials[d.serial] = d
+    if (d.serial && !prevMap[d.serial]) {
+      var typeName = d.type.charAt(0).toUpperCase() + d.type.slice(1)
+      changes.push({ type: "connected", name: d.name, icon: deviceNotificationIcon(d.type), message: typeName + " connected" })
+    }
+  }
+  var prevSerials = Object.keys(prevMap)
+  for (var j = 0; j < prevSerials.length; j++) {
+    if (!currentSerials[prevSerials[j]])
+      changes.push({ type: "disconnected", name: prevMap[prevSerials[j]], icon: "notification-bell", message: "Device disconnected" })
+  }
+  return changes
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NODE.JS COMPATIBILITY (for test suite)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+if (typeof module !== "undefined") {
   module.exports = {
     parseData: parseData,
     deviceTypeIcon: deviceTypeIcon,
@@ -619,17 +872,17 @@ if (typeof module !== "undefined" && module.exports) {
     formatBrightness: formatBrightness,
     getPollInterval: getPollInterval,
     summaryText: summaryText,
-    effectDisplayName: effectDisplayName,
-    effectIcon: effectIcon,
     paletteColors: paletteColors,
     primaryColor: primaryColor,
     secondaryColor: secondaryColor,
+    speedLevels: speedLevels,
+    formatSpeed: formatSpeed,
+    effectDisplayName: effectDisplayName,
+    effectIcon: effectIcon,
     needsColor: needsColor,
     needsSecondaryColor: needsSecondaryColor,
     needsDirection: needsDirection,
     needsSpeed: needsSpeed,
-    speedLevels: speedLevels,
-    formatSpeed: formatSpeed,
     isBreathingEffect: isBreathingEffect,
     isRippleEffect: isRippleEffect,
     isStarlightEffect: isStarlightEffect,
@@ -643,11 +896,14 @@ if (typeof module !== "undefined" && module.exports) {
     isEffectSelected: isEffectSelected,
     categorizedEffects: categorizedEffects,
     hasCustomizationOptions: hasCustomizationOptions,
-    hasPerKeyLighting: hasPerKeyLighting,
     deviceOrderFromSettings: deviceOrderFromSettings,
     applyDeviceOrder: applyDeviceOrder,
     settingsDeviceOrder: settingsDeviceOrder,
+    hasPerKeyLighting: hasPerKeyLighting,
     isKeyboardType: isKeyboardType,
-    keyLabel: keyLabel
+    keyLabel: keyLabel,
+    buildDeviceMap: buildDeviceMap,
+    deviceNotificationIcon: deviceNotificationIcon,
+    detectDeviceChanges: detectDeviceChanges
   }
 }
