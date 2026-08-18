@@ -127,7 +127,7 @@ Panel {
   function sendDeviceNotification(change) {
     var urgency = change.type === "connected" ? "low" : "normal"
     var title = change.type === "connected" ? "Device Connected" : "Device Disconnected"
-    notifyProc.command = ["notify-send", "-a", "OmaRazer", "-u", urgency, "-i", change.icon, title, change.name]
+    notifyProc.command = ["notify-send", "-a", "OmaRazer", "-u", urgency, title, change.name]
     notifyProc.running = true
   }
 

@@ -814,20 +814,9 @@ function buildDeviceMap(devices) {
   return map
 }
 
-/** Return a freedesktop icon name for a device type (used in desktop notifications). */
-function deviceNotificationIcon(type) {
-  var t = String(type || "").toLowerCase()
-  if (t === "keyboard" || t === "keypad") return "input-keyboard"
-  if (t === "mouse") return "input-mouse"
-  if (t === "headset" || t === "headphones") return "audio-headphones"
-  if (t === "speaker" || t === "speakers" || t === "soundbar") return "audio-speakers"
-  if (t === "mousemat" || t === "mat" || t === "pad") return "input-gaming"
-  return "preferences-desktop-peripherals"
-}
-
 /**
  * Compare a previous device map snapshot against current devices.
- * Returns an array of change events: { type, name, icon, message }
+ * Returns an array of change events: { type, name, message }
  * where type is "connected" or "disconnected".
  */
 function detectDeviceChanges(prevMap, devices) {
@@ -839,13 +828,13 @@ function detectDeviceChanges(prevMap, devices) {
     if (d.serial) currentSerials[d.serial] = d
     if (d.serial && !prevMap[d.serial]) {
       var typeName = d.type.charAt(0).toUpperCase() + d.type.slice(1)
-      changes.push({ type: "connected", name: d.name, icon: deviceNotificationIcon(d.type), message: typeName + " connected" })
+      changes.push({ type: "connected", name: d.name, message: typeName + " connected" })
     }
   }
   var prevSerials = Object.keys(prevMap)
   for (var j = 0; j < prevSerials.length; j++) {
     if (!currentSerials[prevSerials[j]])
-      changes.push({ type: "disconnected", name: prevMap[prevSerials[j]], icon: "notification-bell", message: "Device disconnected" })
+      changes.push({ type: "disconnected", name: prevMap[prevSerials[j]], message: "Device disconnected" })
   }
   return changes
 }
@@ -903,7 +892,6 @@ if (typeof module !== "undefined") {
     isKeyboardType: isKeyboardType,
     keyLabel: keyLabel,
     buildDeviceMap: buildDeviceMap,
-    deviceNotificationIcon: deviceNotificationIcon,
     detectDeviceChanges: detectDeviceChanges
   }
 }
