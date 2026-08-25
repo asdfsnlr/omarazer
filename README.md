@@ -14,18 +14,26 @@ An Omarchy shell bar widget and panel plugin that connects to the OpenRazer daem
 - **At-a-Glance Status in Your Bar**: Instantly see connected device counts and battery states right from the Omarchy status bar without cluttering your workspace.
 - **Native & Lightweight Performance**: Fast, native QML interface powered by Quickshell — no bloated background web runtimes or heavy Electron applications required.
 - **Instant Lighting & Profile Switching**: Adjust RGB lighting effects, colors, brightness, animation speeds, and global presets in seconds with immediate hardware response.
+- **Mouse DPI Step Presets & Profiles**: Instant 1-click DPI step switching right from device cards, plus a dedicated preset editor with live sensitivity sliders, custom step management, and saveable DPI profiles.
 - **Per-Key LED Matrix Editor**: Full-screen keyboard editor with paint modes, color palette, used-color tracking, and key labels — paint individual keys, fill entire rows, or fill all at once.
-- **Saveable Lighting Profiles**: Create, load, and delete named per-key profiles; auto-load on selection with inline creation workflow.
+- **Saveable Profiles (Lighting & DPI)**: Create, load, and delete named per-key lighting profiles and mouse DPI profiles; auto-load on selection with intuitive inline creation workflow.
 - **Wireless Battery Awareness**: Color-coded battery level indicators and charging status prevent your wireless mice and headsets from running out of power mid-game or mid-work.
 - **Keyboard-First Ergonomics**: Designed for tiling window manager workflows with full keyboard navigation, quick shortcuts (`Esc` to close, `r` to refresh), and mouse controls.
 - **Self-Healing & Diagnostic Tools**: Live daemon connectivity checks with one-click restart actions if the OpenRazer background service is stopped.
-- **Scriptable CLI Automation**: Includes a standalone Python CLI tool for automating lighting profiles, polling rates, and brightness via scripts or custom keybindings.
+- **Scriptable CLI Automation**: Includes a standalone Python CLI tool for automating lighting profiles, DPI steps, polling rates, and brightness via scripts or custom keybindings.
 
 ## Features
 
 - **Device Discovery & Status**: Automatically detects all connected Razer devices via the OpenRazer daemon.
 - **Hardware Telemetry**: Displays device names, device types, serial numbers, and firmware versions.
 - **Battery Monitoring**: Live battery percentage and charging state indicators with color-coded levels for wireless devices.
+- **Mouse DPI Sensitivity & Profile Management**:
+  - **Quick-Switch Step Buttons**: Direct 1-click DPI switching on mouse cards (`800`, `1200`, `1800`, `2400`, `3200`, etc.) with instant active step visual highlighting.
+  - **Dedicated DPI Preset Editor**: Full-screen overlay window with live sensitivity slider (100 to device `max_dpi`), fine-tuning nudge buttons (`-500`, `-100`, `+100`, `+500`), and live readout.
+  - **Custom Step Management**: Add custom DPI steps via numeric input or remove individual steps with `×` chips.
+  - **DPI Profile System**: Save, load, and delete named DPI profiles (*Default*, *FPS*, *Gaming*, *Office*) stored in `~/.config/omarazer/dpi_profiles/`.
+  - **Quick Preset Templates**: One-click application of curated preset templates (e.g. *FPS (800, 1200, 3000)*, *Gaming (400-3200)*, *Office*).
+  - **Hardware On-Board Memory Stages**: Driver-level support for programming hardware on-board memory stages (`set_dpi_stages`) on compatible devices.
 - **Lighting Effect Configurations**:
   - **Categorized Per-Device Effect Organization**: Grouped into logical categories (**Presets**, **Dynamic**, and **Interactive**) displaying only the lighting effects supported by each peripheral.
   - **13 Supported Effects**: Off, Static, Spectrum, Wave, Breathing (Single/Random/Dual), Reactive, Ripple (Single/Random), Starlight (Random/Single/Dual).
@@ -179,6 +187,13 @@ python3 scripts/razer_devices.py --set-brightness <serial|all> 75
 # Set polling rate (Hz) for a device
 python3 scripts/razer_devices.py --set-poll-rate <serial> 1000
 
+# Set mouse DPI sensitivity (single value or independent X/Y)
+python3 scripts/razer_devices.py --set-dpi <serial> 1800
+python3 scripts/razer_devices.py --set-dpi <serial> 1200 1600
+
+# Set hardware DPI stages on mouse on-board memory (active_stage + stages list)
+python3 scripts/razer_devices.py --set-dpi-stages <serial> 1 800 1200 1800 2400 3200
+
 # Get per-key LED matrix dimensions (rows, cols)
 python3 scripts/razer_devices.py --get-matrix-dims <serial>
 
@@ -188,18 +203,25 @@ python3 scripts/razer_devices.py --set-per-key <serial> 0 0 255 0 0
 # Set multiple key colors in one batch (JSON array of [row, col, r, g, b])
 python3 scripts/razer_devices.py --set-per-key-batch <serial> '[[0,0,255,0,0],[0,1,0,255,0]]'
 
-# Profile management
+# Per-key lighting profile management
 python3 scripts/razer_devices.py --list-profiles
 python3 scripts/razer_devices.py --save-profile "My Profile" '{"name":"My Profile","rows":6,"cols":22,"colors":[...]}'
 python3 scripts/razer_devices.py --load-profile "My Profile"
 python3 scripts/razer_devices.py --delete-profile "My Profile"
+
+# Mouse DPI profile management
+python3 scripts/razer_devices.py --list-dpi-profiles
+python3 scripts/razer_devices.py --save-dpi-profile "FPS Pro" '{"name":"FPS Pro","presets":[800,1200,3000],"dpi":1200}'
+python3 scripts/razer_devices.py --load-dpi-profile "FPS Pro"
+python3 scripts/razer_devices.py --delete-dpi-profile "FPS Pro"
 ```
 
 ## Profile Storage
 
-Profiles are stored as individual JSON files in `~/.config/omarazer/profiles/`. Each profile is named `<profile-name>.json` (with unsafe characters stripped from the name).
+Profiles are stored as individual JSON files under `~/.config/omarazer/`:
 
-**Profile format:**
+### 1. Per-Key Lighting Profiles (`~/.config/omarazer/profiles/`)
+Named `<profile-name>.json` (with unsafe characters sanitized).
 
 ```json
 {
@@ -217,6 +239,21 @@ Profiles are stored as individual JSON files in `~/.config/omarazer/profiles/`. 
 - `rows` / `cols` — the LED matrix dimensions at time of save.
 - `colors` — flat array of hex color strings (`#RRGGBB`), one per LED, in row-major order (total length = `rows × cols`).
 - Loading a profile validates that the stored dimensions match the device's current matrix before applying.
+
+### 2. Mouse DPI Profiles (`~/.config/omarazer/dpi_profiles/`)
+Named `<profile-name>.json` (with unsafe characters sanitized).
+
+```json
+{
+  "name": "FPS Pro",
+  "presets": [800, 1200, 3000],
+  "dpi": 1200
+}
+```
+
+- `presets` — numerically sorted array of DPI step values configured for quick-switching.
+- `dpi` — default or active sensitivity in DPI associated with the profile.
+- Built-in defaults (*Default*, *FPS*, *Gaming*, *Office*) are seeded automatically.
 
 ## Running Tests
 
@@ -238,6 +275,20 @@ qmllint -I /usr/share/omarchy/shell ./Panel.qml
 
 ## Updates
 
+### August 25, 2026 (v1.4.0)
+- **Mouse DPI Quick-Switch Presets**: Direct 1-click DPI step buttons on mouse device cards with reactive active-step accent styling.
+- **Dedicated DPI Preset & Profile Editor Window (`DpiEditor.qml`)**: Full modal overlay featuring live sensitivity sliders (100–max DPI), nudge adjustment buttons, custom step addition/removal, and quick templates (*Default*, *FPS*, *Gaming*, *Office*).
+- **DPI Profile Management**: Save, load, and delete named DPI profiles in `~/.config/omarazer/dpi_profiles/`.
+- **Hardware DPI Stages Backend**: Added driver-level support for programming on-board memory stages (`set_dpi_stages` / `--set-dpi-stages`) on compatible OpenRazer mice.
+- **UI State Reactivity**: Added instant local tracking of active DPI across the panel for zero-latency visual feedback on selection.
+
+### August 18, 2026 (v1.3.0)
+- Model.js split into 9 sub-modules, then flattened back to single file for QML `import` compatibility
+- Panel.qml refactored from ~1500 lines to ~430 lines by extracting 6 components into `ui/` directory: PanelHeader, GlobalControls, ErrorState, EmptyState, DeviceCard, EffectOptions
+- Fixed QML directory import issues (`import "ui"` + bare type names, missing `import qs.Ui`)
+- Expanded color palette from 10 to 51 colors across 4 tiers: Neutrals, Saturated Spectrum, Pastels, Dark Tones
+- Added descriptive comments throughout Panel.qml and Model.js (JSDoc, section headers, property docs)
+
 ### August 17, 2026
 - Implemented per-key lighting profile system (save / load / delete)
 - Profiles section relocated to top of per-key editor (after header, before color palette)
@@ -247,13 +298,6 @@ qmllint -I /usr/share/omarchy/shell ./Panel.qml
 - Fixed Python module imports with `sys.path.insert` in `razer_devices.py`
 - Device connect/disconnect desktop notifications with freedesktop icon names
 - Notification toggle button added to panel header
-
-### August 18, 2026
-- Model.js split into 9 sub-modules, then flattened back to single file for QML `import` compatibility
-- Panel.qml refactored from ~1500 lines to ~430 lines by extracting 6 components into `ui/` directory: PanelHeader, GlobalControls, ErrorState, EmptyState, DeviceCard, EffectOptions
-- Fixed QML directory import issues (`import "ui"` + bare type names, missing `import qs.Ui`)
-- Expanded color palette from 10 to 51 colors across 4 tiers: Neutrals, Saturated Spectrum, Pastels, Dark Tones
-- Added descriptive comments throughout Panel.qml and Model.js (JSDoc, section headers, property docs)
 
 ## License
 

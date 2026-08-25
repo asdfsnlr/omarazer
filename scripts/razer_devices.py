@@ -25,9 +25,18 @@ if _plugin_root not in sys.path:
 
 from scripts.helpers import normalize_effect_name
 from scripts.devices import get_razer_status, print_summary
-from scripts.effects import set_brightness, set_poll_rate, set_effect
+from scripts.effects import set_brightness, set_poll_rate, set_effect, set_dpi, set_dpi_stages
 from scripts.perkey import get_matrix_dims, set_per_key, set_per_key_batch
-from scripts.profiles import list_profiles, save_profile, load_profile, delete_profile
+from scripts.profiles import (
+    list_profiles,
+    save_profile,
+    load_profile,
+    delete_profile,
+    list_dpi_profiles,
+    save_dpi_profile,
+    load_dpi_profile,
+    delete_dpi_profile,
+)
 
 
 def main() -> int:
@@ -45,6 +54,18 @@ def main() -> int:
         nargs=2,
         metavar=("SERIAL", "RATE"),
         help="Set polling rate (Hz) for device serial",
+    )
+    parser.add_argument(
+        "--set-dpi",
+        nargs="+",
+        metavar="ARG",
+        help="Set DPI for device serial: SERIAL DPI_X [DPI_Y]",
+    )
+    parser.add_argument(
+        "--set-dpi-stages",
+        nargs="+",
+        metavar="ARG",
+        help="Set hardware DPI stages: SERIAL ACTIVE_STAGE STAGE1 STAGE2 ...",
     )
     parser.add_argument(
         "--set-effect",
@@ -90,6 +111,27 @@ def main() -> int:
         metavar="NAME",
         help="Delete a saved profile by name",
     )
+    parser.add_argument(
+        "--list-dpi-profiles",
+        action="store_true",
+        help="List saved DPI profile names as JSON array",
+    )
+    parser.add_argument(
+        "--save-dpi-profile",
+        nargs=2,
+        metavar=("NAME", "JSON"),
+        help="Save a DPI profile: NAME '{\"presets\":[800,1200,3000],\"dpi\":800}'",
+    )
+    parser.add_argument(
+        "--load-dpi-profile",
+        metavar="NAME",
+        help="Load a DPI profile by name (JSON output)",
+    )
+    parser.add_argument(
+        "--delete-dpi-profile",
+        metavar="NAME",
+        help="Delete a saved DPI profile by name",
+    )
 
     args = parser.parse_args()
 
@@ -101,6 +143,30 @@ def main() -> int:
     if args.set_poll_rate:
         serial, rate = args.set_poll_rate
         success = set_poll_rate(serial, int(rate))
+        return 0 if success else 1
+
+    if args.set_dpi:
+        raw_args = args.set_dpi
+        if len(raw_args) < 2:
+            sys.stderr.write("Usage: --set-dpi SERIAL DPI_X [DPI_Y]\n")
+            return 1
+        serial = raw_args[0]
+        dpi_x = int(raw_args[1])
+        dpi_y = int(raw_args[2]) if len(raw_args) > 2 else dpi_x
+        success = set_dpi(serial, dpi_x, dpi_y)
+        return 0 if success else 1
+
+    if args.set_dpi_stages:
+        raw_args = args.set_dpi_stages
+        if len(raw_args) < 3:
+            sys.stderr.write(
+                "Usage: --set-dpi-stages SERIAL ACTIVE_STAGE STAGE1 [STAGE2 ...]\n"
+            )
+            return 1
+        serial = raw_args[0]
+        active_stage = int(raw_args[1])
+        stages = [int(x) for x in raw_args[2:]]
+        success = set_dpi_stages(serial, active_stage, stages)
         return 0 if success else 1
 
     if args.set_effect:
@@ -175,6 +241,35 @@ def main() -> int:
 
     if args.delete_profile:
         success = delete_profile(args.delete_profile)
+        return 0 if success else 1
+
+    if args.list_dpi_profiles:
+        names = list_dpi_profiles()
+        print(json.dumps(names))
+        return 0
+
+    if args.save_dpi_profile:
+        name, json_data = args.save_dpi_profile
+        try:
+            data = json.loads(json_data)
+            if not isinstance(data, dict):
+                sys.stderr.write("Error: DPI profile data must be a JSON object\n")
+                return 1
+        except json.JSONDecodeError as e:
+            sys.stderr.write(f"Error parsing DPI profile JSON: {e}\n")
+            return 1
+        success = save_dpi_profile(name, data)
+        return 0 if success else 1
+
+    if args.load_dpi_profile:
+        data = load_dpi_profile(args.load_dpi_profile)
+        if data is None:
+            return 1
+        print(json.dumps(data, separators=(",", ":")))
+        return 0
+
+    if args.delete_dpi_profile:
+        success = delete_dpi_profile(args.delete_dpi_profile)
         return 0 if success else 1
 
     status = get_razer_status()

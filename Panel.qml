@@ -58,8 +58,32 @@ Panel {
   /** Map of serial -> true for devices that have had per-key lighting applied. */
   property var perKeyApplied: ({})
 
+  // ── DPI Editor State ──────────────────────────────────────────────────────
+
+  /** Whether the DPI presets editor overlay is currently visible. */
+  property bool dpiEditorOpen: false
+
+  /** Serial of the device being edited in the DPI editor. */
+  property string dpiDeviceSerial: ""
+
+  /** Display name of the device being edited (shown in DPI editor header). */
+  property string dpiDeviceName: ""
+
+  /** Current DPI of the device being edited. */
+  property int dpiDeviceCurrent: 800
+
+  /** Max DPI of the device being edited. */
+  property int dpiDeviceMax: 16000
+
+  /** Map of serial -> array of DPI preset steps (e.g. [800, 1200, 3000]). */
+  property var deviceDpiPresets: ({})
+
+  /** Map of serial -> current active DPI value (for reactive UI selection). */
+  property var deviceDpi: ({})
+
   /** Map of serial -> effect name for locally-selected effects (before apply). */
   property var deviceEffects: ({})
+
 
   /** Previous device serial->name map, used for connect/disconnect detection. */
   property var prevDeviceMap: ({})
@@ -115,6 +139,18 @@ Panel {
         sendDeviceNotification(changes[i])
     }
     prevDeviceMap = Model.buildDeviceMap(parsed.devices || [])
+    // Sync deviceDpi from daemon devices if not overridden locally
+    if (parsed && Array.isArray(parsed.devices)) {
+      var dMap = Object.assign({}, root.deviceDpi)
+      for (var j = 0; j < parsed.devices.length; j++) {
+        var d = parsed.devices[j]
+        if (d && d.serial && d.has_dpi && d.dpi) {
+          var dpiVal = Array.isArray(d.dpi) ? d.dpi[0] : d.dpi
+          dMap[d.serial] = Number(dpiVal)
+        }
+      }
+      root.deviceDpi = dMap
+    }
     razerData = parsed
     dataVersion++
     loading = false
@@ -170,6 +206,43 @@ Panel {
     actionProc.command = ["python3", pathFromUrl(Qt.resolvedUrl("scripts/razer_devices.py")), "--set-poll-rate", String(serial), String(rate)]
     actionProc.running = true
   }
+
+  /** Set DPI for a specific device. */
+  function setDpi(serial, dpiX, dpiY) {
+    if (!serial || !dpiX) return
+    var valX = Number(dpiX)
+    var valY = dpiY !== undefined && dpiY !== null ? Number(dpiY) : valX
+
+    // Track active DPI immediately for instant reactive UI highlight
+    var dMap = Object.assign({}, root.deviceDpi)
+    dMap[serial] = valX
+    root.deviceDpi = dMap
+
+    // Optimistic UI update: clone device list with updated DPI
+    if (root.razerData && Array.isArray(root.razerData.devices)) {
+      var copy = Object.assign({}, root.razerData)
+      copy.devices = root.razerData.devices.map(function(d) {
+        if (!d) return d
+        if (d.serial && String(d.serial).toLowerCase() === String(serial).toLowerCase()) {
+          var dc = Object.assign({}, d)
+          dc.dpi = [valX, valY]
+          return dc
+        }
+        return d
+      })
+      root.razerData = copy
+      root.dataVersion++
+    }
+
+    var args = ["python3", pathFromUrl(Qt.resolvedUrl("scripts/razer_devices.py")), "--set-dpi", String(serial), String(valX)]
+    if (dpiY !== undefined && dpiY !== null) {
+      args.push(String(valY))
+    }
+    actionProc.command = args
+    actionProc.running = true
+  }
+
+
 
   /** Toggle the expanded/collapsed state of a device card's effect options. */
   function toggleDeviceExpanded(serial) {
@@ -284,6 +357,40 @@ Panel {
     perKeyMatrixCols = 0
     refresh()
   }
+
+  // ── DPI Editor ────────────────────────────────────────────────────────────
+
+  /** Open the DPI presets editor for a mouse device. */
+  function openDpiEditor(device) {
+    if (!device) return
+    dpiDeviceSerial = device.serial || ""
+    dpiDeviceName = device.name || "Mouse"
+    var dVal = 800
+    if (Array.isArray(device.dpi) && device.dpi.length > 0) dVal = Number(device.dpi[0])
+    else if (typeof device.dpi === "number") dVal = Number(device.dpi)
+    dpiDeviceCurrent = dVal
+    dpiDeviceMax = device.max_dpi || 16000
+    dpiEditorOpen = true
+  }
+
+  /** Close the DPI presets editor and refresh device data. */
+  function closeDpiEditor() {
+    dpiEditorOpen = false
+    dpiDeviceSerial = ""
+    dpiDeviceName = ""
+    dpiDeviceCurrent = 800
+    dpiDeviceMax = 16000
+    refresh()
+  }
+
+  /** Update the active presets list for a device. */
+  function setDeviceDpiPresets(serial, presets) {
+    if (!serial) return
+    var copy = Object.assign({}, root.deviceDpiPresets)
+    copy[serial] = presets
+    root.deviceDpiPresets = copy
+  }
+
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -486,10 +593,14 @@ Panel {
                   perKeyActive: deviceCard.perKeyActive
                   deviceEffects: root.deviceEffects
                   deviceSpeeds: root.deviceSpeeds
+                  deviceDpiPresets: root.deviceDpiPresets
+                  deviceDpi: root.deviceDpi
                   onSetBrightness: function(serial, value) { root.setBrightness(serial, value) }
                   onSetEffect: function(serial, effect, color, color2, param) { root.setEffect(serial, effect, color, color2, param) }
                   onSetPollRate: function(serial, value) { root.setPollRate(serial, value) }
+                  onSetDpi: function(serial, value) { root.setDpi(serial, value) }
                   onOpenPerKeyEditor: function(device) { root.openPerKeyEditor(device) }
+                  onOpenDpiEditor: function(device) { root.openDpiEditor(device) }
                   onToggleExpanded: function(deviceKey) { root.toggleDeviceExpanded(deviceKey) }
                 }
               }
@@ -533,4 +644,24 @@ Panel {
       root.perKeyApplied = copy
     }
   }
+
+  // ── DPI Presets Editor (standalone centered window) ───────────────────────
+
+  DpiEditor {
+    id: dpiEditor
+    deviceSerial: root.dpiEditorOpen ? root.dpiDeviceSerial : ""
+    deviceName: root.dpiDeviceName
+    currentDpi: root.dpiDeviceCurrent
+    maxDpi: root.dpiDeviceMax
+    activePresets: root.deviceDpiPresets[root.dpiDeviceSerial] || Model.defaultDpiPresets()
+    onCloseRequested: root.closeDpiEditor()
+    onApplied: function(serial, dpi, presets) {
+      root.setDpi(serial, dpi)
+      if (presets) root.setDeviceDpiPresets(serial, presets)
+    }
+    onPresetsUpdated: function(serial, presets) {
+      root.setDeviceDpiPresets(serial, presets)
+    }
+  }
 }
+

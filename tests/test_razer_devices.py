@@ -87,5 +87,37 @@ class TestRazerDevices(unittest.TestCase):
         self.assertEqual(res["dpi"], [1800, 1800])
         self.assertEqual(res["max_dpi"], 16000)
 
+    def test_dpi_profiles_management(self):
+        from scripts.profiles import (
+            list_dpi_profiles,
+            save_dpi_profile,
+            load_dpi_profile,
+            delete_dpi_profile,
+        )
+
+        # Test listing profiles (includes seeded defaults)
+        profiles = list_dpi_profiles()
+        self.assertIn("Default", profiles)
+        self.assertIn("FPS", profiles)
+
+        # Test saving custom DPI profile
+        test_data = {"name": "TestDpiProfile", "presets": [800, 1200, 3000], "dpi": 1200}
+        success = save_dpi_profile("TestDpiProfile", test_data)
+        self.assertTrue(success)
+
+        # Test loading custom DPI profile
+        loaded = load_dpi_profile("TestDpiProfile")
+        self.assertIsNotNone(loaded)
+        self.assertEqual(loaded["name"], "TestDpiProfile")
+        self.assertEqual(loaded["presets"], [800, 1200, 3000])
+        self.assertEqual(loaded["dpi"], 1200)
+
+        # Test deleting custom DPI profile
+        del_success = delete_dpi_profile("TestDpiProfile")
+        self.assertTrue(del_success)
+        self.assertIsNone(load_dpi_profile("NonExistentProfile12345"))
+
+
 if __name__ == "__main__":
     unittest.main()
+

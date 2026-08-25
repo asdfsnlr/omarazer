@@ -17,16 +17,39 @@ ColumnLayout {
   property bool perKeyActive: false
   property var deviceEffects: ({})
   property var deviceSpeeds: ({})
+  property var deviceDpiPresets: ({})
+  property var deviceDpi: ({})
 
   signal setBrightness(serial: string, value: real)
   signal setEffect(serial: string, effect: string, color: string, color2: string, param: string)
   signal setPollRate(serial: string, value: int)
+  signal setDpi(serial: string, value: int)
   signal openPerKeyEditor(device: var)
+  signal openDpiEditor(device: var)
   signal toggleExpanded(deviceKey: string)
 
   readonly property string deviceKey: modelData.serial || modelData.name || "unknown"
   readonly property string currentEffect: (root.deviceEffects[modelData.serial] || modelData.current_effect || "static").toLowerCase()
   readonly property string currentSpeed: root.deviceSpeeds[deviceKey] || ""
+  readonly property int activeDpiVal: {
+    if (root.deviceDpi && root.deviceDpi[root.modelData.serial] !== undefined && root.deviceDpi[root.modelData.serial] !== null) {
+      return Number(root.deviceDpi[root.modelData.serial])
+    }
+    if (Array.isArray(root.modelData.dpi) && root.modelData.dpi.length > 0) {
+      return Number(root.modelData.dpi[0])
+    }
+    if (typeof root.modelData.dpi === "number") {
+      return Number(root.modelData.dpi)
+    }
+    return 0
+  }
+  readonly property var currentDpiPresets: {
+    var p = root.deviceDpiPresets[root.modelData.serial]
+    if (Array.isArray(p) && p.length > 0) return p
+    return Model.defaultDpiPresets()
+  }
+
+
 
   spacing: Style.space(8)
 
@@ -125,7 +148,7 @@ ColumnLayout {
     // DPI Indicator (if present)
     Text {
       visible: root.modelData.has_dpi && root.modelData.dpi !== null
-      text: Model.formatDpi(root.modelData.dpi)
+      text: Model.formatDpi(root.activeDpiVal > 0 ? root.activeDpiVal : root.modelData.dpi)
       color: root.fg
       font.family: root.fontFamily
       font.pixelSize: Style.font.caption
@@ -220,11 +243,16 @@ ColumnLayout {
 
       delegate: Button {
         required property int modelData
+        readonly property bool isSelected: root.modelData.poll_rate === modelData
+
         text: modelData + " Hz"
-        foreground: root.modelData.poll_rate === modelData ? Color.accent : root.fg
+        foreground: isSelected ? Color.accent : root.fg
+        background: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
         fontFamily: root.fontFamily
         fontSize: Style.font.caption
         bordered: true
+        selected: isSelected
+        active: isSelected
         horizontalPadding: Style.space(6)
         verticalPadding: Style.space(3)
         onClicked: {
@@ -233,6 +261,88 @@ ColumnLayout {
       }
     }
   }
+
+  // ── DPI Sensitivity & Preset Steps (if supported) ──
+  ColumnLayout {
+    visible: root.modelData.has_dpi && root.modelData.dpi !== null
+    Layout.fillWidth: true
+    spacing: Style.space(6)
+
+    RowLayout {
+      Layout.fillWidth: true
+      spacing: Style.space(8)
+
+      Text {
+        text: "󰍽"
+        color: root.dim
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.bodySmall
+        Layout.alignment: Qt.AlignVCenter
+      }
+
+      Text {
+        text: "DPI Sensitivity"
+        color: root.dim
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.caption
+        Layout.alignment: Qt.AlignVCenter
+      }
+
+      Item { Layout.fillWidth: true }
+
+      Text {
+        text: Model.formatDpi(root.activeDpiVal > 0 ? root.activeDpiVal : root.modelData.dpi)
+        color: Color.accent
+        font.family: root.fontFamily
+        font.pixelSize: Style.font.caption
+        font.bold: true
+        Layout.alignment: Qt.AlignVCenter
+      }
+
+      Button {
+        text: "Presets"
+        iconText: "󰏫"
+        foreground: Color.accent
+        fontFamily: root.fontFamily
+        fontSize: Style.font.caption
+        bordered: true
+        horizontalPadding: Style.space(6)
+        verticalPadding: Style.space(3)
+        onClicked: root.openDpiEditor(root.modelData)
+      }
+    }
+
+    // Preset Steps Quick-Switch Row
+    RowLayout {
+      Layout.fillWidth: true
+      spacing: Style.space(4)
+
+      Repeater {
+        model: root.currentDpiPresets
+
+        delegate: Button {
+          required property int modelData
+          readonly property bool isSelected: root.activeDpiVal === modelData
+
+          text: String(modelData)
+          foreground: isSelected ? Color.accent : root.fg
+          background: isSelected ? Qt.rgba(Color.accent.r, Color.accent.g, Color.accent.b, 0.22) : "transparent"
+          fontFamily: root.fontFamily
+          fontSize: Style.font.caption
+          bordered: true
+          selected: isSelected
+          active: isSelected
+          horizontalPadding: Style.space(6)
+          verticalPadding: Style.space(3)
+          Layout.fillWidth: true
+          onClicked: {
+            root.setDpi(root.modelData.serial, modelData)
+          }
+        }
+      }
+    }
+  }
+
 
   // ── Lighting Effects Section ──
   ColumnLayout {

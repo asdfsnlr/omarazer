@@ -57,6 +57,26 @@ def get_device_info(device: Any, daemon_version: str = "") -> dict[str, Any]:
         except (NotImplementedError, Exception):
             max_dpi = None
 
+    # Hardware DPI stages (on-board memory steps)
+    has_dpi_stages = bool(caps.get("dpi_stages", False))
+    hardware_dpi_stages: list[int] = []
+    active_dpi_stage: int | None = None
+    if has_dpi_stages:
+        try:
+            stages_tuple = getattr(device, "dpi_stages", None)
+            if isinstance(stages_tuple, (tuple, list)) and len(stages_tuple) >= 2:
+                active_dpi_stage = int(stages_tuple[0])
+                raw_stages = stages_tuple[1]
+                for st in raw_stages:
+                    if isinstance(st, (tuple, list)):
+                        hardware_dpi_stages.append(int(st[0]))
+                    else:
+                        hardware_dpi_stages.append(int(st))
+        except (NotImplementedError, Exception):
+            has_dpi_stages = False
+            hardware_dpi_stages = []
+            active_dpi_stage = None
+
     # Poll Rate (Hz)
     poll_rate: int | None = None
     has_poll_rate = bool(caps.get("poll_rate", False))
@@ -167,6 +187,9 @@ def get_device_info(device: Any, daemon_version: str = "") -> dict[str, Any]:
         "has_dpi": has_dpi,
         "dpi": dpi,
         "max_dpi": max_dpi,
+        "has_dpi_stages": has_dpi_stages,
+        "hardware_dpi_stages": hardware_dpi_stages,
+        "active_dpi_stage": active_dpi_stage,
         "has_poll_rate": has_poll_rate,
         "poll_rate": poll_rate,
         "supported_poll_rates": supported_poll_rates,
@@ -182,6 +205,7 @@ def get_device_info(device: Any, daemon_version: str = "") -> dict[str, Any]:
             "battery": has_battery,
             "brightness": has_brightness,
             "dpi": has_dpi,
+            "dpi_stages": has_dpi_stages,
             "poll_rate": has_poll_rate,
             "lighting": has_lighting,
             "per_key": has_per_key,

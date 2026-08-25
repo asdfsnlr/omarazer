@@ -59,6 +59,83 @@ def set_poll_rate(serial: str, rate: int) -> bool:
     return found
 
 
+def set_dpi(serial: str, dpi_x: int, dpi_y: int | None = None) -> bool:
+    """Set DPI for a device by serial number or 'all'."""
+    try:
+        dm = _connect()
+    except Exception as e:
+        sys.stderr.write(f"Error connecting to OpenRazer daemon: {e}\n")
+        return False
+
+    dpi_x = int(dpi_x)
+    dpi_y = int(dpi_y) if dpi_y is not None else dpi_x
+
+    found = False
+    for dev in dm.devices:
+        dev_serial = str(safe_get(dev, "serial", ""))
+        if serial.lower() == "all" or dev_serial.lower() == serial.lower():
+            try:
+                max_dpi = int(safe_get(dev, "max_dpi", 20000) or 20000)
+                cur_x = max(100, min(max_dpi, dpi_x))
+                cur_y = max(100, min(max_dpi, dpi_y))
+
+                if hasattr(dev, "has") and dev.has("available_dpi"):
+                    dev.dpi = (cur_x, 0)
+                else:
+                    dev.dpi = (cur_x, cur_y)
+                found = True
+            except Exception as e:
+                try:
+                    dev.dpi = (cur_x, cur_y)
+                    found = True
+                except Exception as e2:
+                    sys.stderr.write(f"Failed to set DPI on {dev.name}: {e2}\n")
+
+    return found
+
+
+def set_dpi_stages(
+    serial: str, active_stage: int, stages: list[int | list[int] | tuple[int, int]]
+) -> bool:
+    """Set hardware DPI stages on mouse on-board memory by serial or 'all'."""
+    try:
+        dm = _connect()
+    except Exception as e:
+        sys.stderr.write(f"Error connecting to OpenRazer daemon: {e}\n")
+        return False
+
+    found = False
+    for dev in dm.devices:
+        dev_serial = str(safe_get(dev, "serial", ""))
+        if serial.lower() == "all" or dev_serial.lower() == serial.lower():
+            if hasattr(dev, "has") and dev.has("dpi_stages"):
+                try:
+                    max_dpi = int(safe_get(dev, "max_dpi", 20000) or 20000)
+                    tuples_list: list[tuple[int, int]] = []
+                    for st in stages:
+                        if isinstance(st, (list, tuple)):
+                            x = max(100, min(max_dpi, int(st[0])))
+                            y = max(100, min(max_dpi, int(st[1]) if len(st) > 1 else x))
+                        else:
+                            x = max(100, min(max_dpi, int(st)))
+                            y = x
+                        tuples_list.append((x, y))
+
+                    if not tuples_list:
+                        continue
+
+                    act = max(1, min(len(tuples_list), int(active_stage)))
+                    dev.dpi_stages = (act, tuples_list)
+                    found = True
+                except Exception as exc:
+                    sys.stderr.write(
+                        f"Failed to set hardware DPI stages on {dev.name}: {exc}\n"
+                    )
+
+    return found
+
+
+
 def set_effect(
     serial: str,
     effect: str,

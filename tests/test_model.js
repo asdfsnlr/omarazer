@@ -142,6 +142,25 @@ assert.strictEqual(Model.formatDpi(1800), "1800 DPI");
 assert.strictEqual(Model.formatDpi([1800, 1800]), "1800 DPI");
 assert.strictEqual(Model.formatDpi([800, 1200]), "800 x 1200 DPI");
 
+// Test DPI presets and profiles
+assert.deepStrictEqual(Model.defaultDpiPresets(), [800, 1200, 1800, 2400, 3200]);
+assert.deepStrictEqual(Model.defaultDpiProfiles(), ["Default", "FPS", "Gaming", "Office"]);
+
+assert.strictEqual(Model.sanitizeDpi(800, 16000), 800);
+assert.strictEqual(Model.sanitizeDpi(50, 16000), 100);
+assert.strictEqual(Model.sanitizeDpi(20000, 16000), 16000);
+assert.strictEqual(Model.sanitizeDpi("1200", 16000), 1200);
+assert.strictEqual(Model.sanitizeDpi([3000, 3000], 16000), 3000);
+
+assert.deepStrictEqual(Model.sortDpiPresets([3000, 800, 1200]), [800, 1200, 3000]);
+assert.deepStrictEqual(Model.sortDpiPresets([800, 800, 1200, 3000]), [800, 1200, 3000]);
+assert.deepStrictEqual(Model.sortDpiPresets([], 16000), [800, 1200, 1800, 2400, 3200]);
+assert.deepStrictEqual(Model.sortDpiPresets([50, 99999], 16000), [800, 1200, 1800, 2400, 3200]);
+
+assert.strictEqual(Model.isDpiPresetSelected([800, 800], 800), true);
+assert.strictEqual(Model.isDpiPresetSelected(1200, 1200), true);
+assert.strictEqual(Model.isDpiPresetSelected(800, 1200), false);
+
 // Test getPollInterval
 assert.strictEqual(Model.getPollInterval(undefined), 30);
 assert.strictEqual(Model.getPollInterval({}), 30);
@@ -153,3 +172,4 @@ assert.strictEqual(Model.getPollInterval({ pollIntervalSec: 5000 }, 30), 30);
 assert.strictEqual(Model.getPollInterval({ pollIntervalSec: 10, refreshIntervalSec: 25 }), 10);
 
 console.log("All Model.js tests passed!");
+

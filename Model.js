@@ -150,6 +150,58 @@ function formatDpi(dpi) {
   return ""
 }
 
+/** Return standard default DPI preset steps. */
+function defaultDpiPresets() {
+  return [800, 1200, 1800, 2400, 3200]
+}
+
+/** Sanitize a DPI value within valid bounds (100 to maxDpi, default max 20000). */
+function sanitizeDpi(dpi, maxDpi) {
+  var max = (typeof maxDpi === "number" && maxDpi >= 100) ? maxDpi : 20000
+  var val = 800
+  if (Array.isArray(dpi) && dpi.length > 0) val = Number(dpi[0])
+  else if (typeof dpi === "number") val = Number(dpi)
+  else if (typeof dpi === "string") val = parseInt(dpi, 10)
+  if (isNaN(val) || val <= 0) val = 800
+  return Math.max(100, Math.min(max, Math.round(val)))
+}
+
+/**
+ * Clean, deduplicate and numerically sort an array of DPI preset values.
+ * Returns defaultDpiPresets() if the array is empty or contains no valid numbers.
+ */
+function sortDpiPresets(presets, maxDpi) {
+  if (!Array.isArray(presets) || presets.length === 0) return defaultDpiPresets()
+  var max = (typeof maxDpi === "number" && maxDpi >= 100) ? maxDpi : 20000
+  var seen = {}
+  var result = []
+  for (var i = 0; i < presets.length; i++) {
+    var raw = presets[i]
+    var val = parseInt(raw, 10)
+    if (!isNaN(val) && val >= 100 && val <= max && !seen[val]) {
+      seen[val] = true
+      result.push(val)
+    }
+  }
+  if (result.length === 0) return defaultDpiPresets()
+  result.sort(function(a, b) { return a - b })
+  return result
+}
+
+/** Check if a preset step matches current device DPI. */
+function isDpiPresetSelected(currentDpi, preset) {
+  var cur = 0
+  if (Array.isArray(currentDpi) && currentDpi.length > 0) cur = Number(currentDpi[0])
+  else if (typeof currentDpi === "number") cur = Number(currentDpi)
+  else if (typeof currentDpi === "string") cur = parseInt(currentDpi, 10)
+  return cur === Number(preset)
+}
+
+/** Default DPI profile names list. */
+function defaultDpiProfiles() {
+  return ["Default", "FPS", "Gaming", "Office"]
+}
+
 /** Format polling rate as "NNN Hz". */
 function formatPollRate(pollRate) {
   if (typeof pollRate === "number" && pollRate > 0) {
@@ -853,6 +905,11 @@ if (typeof module !== "undefined") {
     formatBarText: formatBarText,
     formatDeviceType: formatDeviceType,
     formatDpi: formatDpi,
+    defaultDpiPresets: defaultDpiPresets,
+    sanitizeDpi: sanitizeDpi,
+    sortDpiPresets: sortDpiPresets,
+    isDpiPresetSelected: isDpiPresetSelected,
+    defaultDpiProfiles: defaultDpiProfiles,
     formatPollRate: formatPollRate,
     supportedPollRates: supportedPollRates,
     formatDaemonVersion: formatDaemonVersion,
