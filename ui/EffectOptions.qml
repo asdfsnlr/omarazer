@@ -22,6 +22,7 @@ BorderSurface {
   signal setBrightness(serial: string, value: real)
   signal setEffect(serial: string, effect: string, color: string, color2: string, param: string)
   signal openPerKeyEditor(device: var)
+  signal openColorPicker(device: var, initialColor: string, isSecondary: bool)
 
   color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.03)
   borderSpec: Border.flat(Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.06), 1)
@@ -373,6 +374,16 @@ BorderSurface {
                 }
               }
             }
+
+            Button {
+              text: "Custom"
+              fontFamily: root.fontFamily
+              fontSize: Style.font.caption
+              bordered: true
+              horizontalPadding: Style.space(6)
+              verticalPadding: Style.space(1)
+              onClicked: root.openColorPicker(root.modelData, Model.primaryColor(root.modelData), false)
+            }
           }
         }
 
@@ -421,6 +432,16 @@ BorderSurface {
                   }
                 }
               }
+            }
+
+            Button {
+              text: "Custom"
+              fontFamily: root.fontFamily
+              fontSize: Style.font.caption
+              bordered: true
+              horizontalPadding: Style.space(6)
+              verticalPadding: Style.space(1)
+              onClicked: root.openColorPicker(root.modelData, Model.secondaryColor(root.modelData), true)
             }
           }
         }

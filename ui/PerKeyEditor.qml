@@ -652,6 +652,75 @@ PanelWindow {
                 }
               }
             }
+            Button {
+              id: customHexBtn
+              text: "Custom"
+              fontFamily: root.fontFamily
+              fontSize: Style.font.caption
+              bordered: true
+              horizontalPadding: Style.space(6)
+              verticalPadding: Style.space(1)
+              onClicked: customHexPopup.open()
+            }
+
+            Popup {
+              id: customHexPopup
+              y: customHexBtn.height + 4
+              width: Style.space(220)
+              padding: Style.space(8)
+              background: Rectangle {
+                color: Color.popups.background
+                border.color: Color.popups.border
+                border.width: 1
+                radius: Style.cornerRadius
+              }
+              contentItem: ColumnLayout {
+                spacing: Style.space(6)
+
+                Text {
+                  text: "Custom Hex Color"
+                  color: Color.foreground
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.caption
+                  font.bold: true
+                }
+
+                RowLayout {
+                  Layout.fillWidth: true
+                  spacing: Style.space(4)
+
+                  TextField {
+                    id: customHexInput
+                    Layout.fillWidth: true
+                    placeholderText: "#RRGGBB"
+                    font.family: root.fontFamily
+                    font.pixelSize: Style.font.caption
+                    text: root.currentColor.toUpperCase()
+                    onAccepted: {
+                      if (Model.isValidHex(text)) {
+                        root.currentColor = Model.normalizeHex(text, root.currentColor)
+                        customHexPopup.close()
+                      }
+                    }
+                  }
+
+                  Button {
+                    text: "OK"
+                    fontFamily: root.fontFamily
+                    fontSize: Style.font.caption
+                    bordered: true
+                    horizontalPadding: Style.space(6)
+                    verticalPadding: Style.space(2)
+                    onClicked: {
+                      if (Model.isValidHex(customHexInput.text)) {
+                        root.currentColor = Model.normalizeHex(customHexInput.text, root.currentColor)
+                        customHexPopup.close()
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
 

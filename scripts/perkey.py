@@ -13,7 +13,12 @@ def _connect():
     """Connect to the OpenRazer daemon and return DeviceManager."""
     import openrazer.client
 
-    return openrazer.client.DeviceManager()
+    dm = openrazer.client.DeviceManager()
+    try:
+        dm.sync_effects = False
+    except Exception:
+        pass
+    return dm
 
 
 def get_matrix_dims(serial: str) -> dict[str, Any]:

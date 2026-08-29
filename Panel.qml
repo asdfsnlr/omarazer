@@ -84,6 +84,29 @@ Panel {
   /** Map of serial -> effect name for locally-selected effects (before apply). */
   property var deviceEffects: ({})
 
+  // ── Color Picker State ────────────────────────────────────────────────────
+
+  /** Whether the custom color picker overlay is currently visible. */
+  property bool colorPickerOpen: false
+
+  /** Serial of the device being edited in the color picker. */
+  property string colorPickerDeviceSerial: ""
+
+  /** Display name of the device being edited. */
+  property string colorPickerDeviceName: ""
+
+  /** Initial color to display when opening the picker. */
+  property string colorPickerInitialColor: "#00ff00"
+
+  /** Whether the picker is targeting the secondary color. */
+  property bool colorPickerIsSecondary: false
+
+  /** Name of the current active lighting effect. */
+  property string colorPickerEffect: "static"
+
+  /** Device object reference for color picker. */
+  property var colorPickerDevice: null
+
 
   /** Previous device serial->name map, used for connect/disconnect detection. */
   property var prevDeviceMap: ({})
@@ -391,6 +414,28 @@ Panel {
     root.deviceDpiPresets = copy
   }
 
+  // ── Color Picker ──────────────────────────────────────────────────────────
+
+  /** Open the custom color picker for a device. */
+  function openColorPicker(device, initialColor, isSecondary) {
+    if (!device) return
+    colorPickerDevice = device
+    colorPickerDeviceSerial = device.serial || ""
+    colorPickerDeviceName = device.name || "Device"
+    colorPickerInitialColor = initialColor || (isSecondary ? Model.secondaryColor(device) : Model.primaryColor(device))
+    colorPickerIsSecondary = !!isSecondary
+    colorPickerEffect = device.current_effect || "static"
+    colorPickerOpen = true
+  }
+
+  /** Close the color picker. */
+  function closeColorPicker() {
+    colorPickerOpen = false
+    colorPickerDeviceSerial = ""
+    colorPickerDeviceName = ""
+    colorPickerDevice = null
+  }
+
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -601,6 +646,7 @@ Panel {
                   onSetDpi: function(serial, value) { root.setDpi(serial, value) }
                   onOpenPerKeyEditor: function(device) { root.openPerKeyEditor(device) }
                   onOpenDpiEditor: function(device) { root.openDpiEditor(device) }
+                  onOpenColorPicker: function(device, initialColor, isSecondary) { root.openColorPicker(device, initialColor, isSecondary) }
                   onToggleExpanded: function(deviceKey) { root.toggleDeviceExpanded(deviceKey) }
                 }
               }
@@ -661,6 +707,26 @@ Panel {
     }
     onPresetsUpdated: function(serial, presets) {
       root.setDeviceDpiPresets(serial, presets)
+    }
+  }
+
+  // ── Custom Color Picker (standalone centered window) ──────────────────────
+
+  ColorPicker {
+    id: colorPicker
+    deviceSerial: root.colorPickerOpen ? root.colorPickerDeviceSerial : ""
+    deviceName: root.colorPickerDeviceName
+    initialColor: root.colorPickerInitialColor
+    isSecondary: root.colorPickerIsSecondary
+    effectName: root.colorPickerEffect
+    onCloseRequested: root.closeColorPicker()
+    onApplied: function(serial, color, isSecondary) {
+      var dev = root.colorPickerDevice
+      var eff = (dev && dev.current_effect) ? dev.current_effect : "static"
+      var prim = isSecondary ? Model.primaryColor(dev) : color
+      var sec = isSecondary ? color : Model.secondaryColor(dev)
+      var spd = Model.needsSpeed(eff) ? root.getDeviceSpeed(serial) : null
+      root.setEffect(serial, eff, prim, sec, spd)
     }
   }
 }

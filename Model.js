@@ -289,71 +289,72 @@ function summaryText(data) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Return the full color palette array (51 colors) for the effect color pickers.
- * Organized in rows: Neutrals, Saturated spectrum, Pastels, Dark tones.
+ * Return the core basic color palette array (15 essential colors) for effect color pickers.
  * Each entry: { name: string, hex: string }
  */
 function paletteColors() {
   return [
-    // ── Neutrals ──
-    { name: "White", hex: "#ffffff" },
-    { name: "Snow", hex: "#f5f5f5" },
-    { name: "Silver", hex: "#c0c0c0" },
-    { name: "Gray", hex: "#666666" },
-    { name: "Charcoal", hex: "#333333" },
-
-    // ── Saturated Spectrum ──
+    { name: "Red", hex: "#ff0000" },
+    { name: "Orange", hex: "#ff8000" },
+    { name: "Amber", hex: "#ffaa00" },
+    { name: "Yellow", hex: "#ffff00" },
+    { name: "Lime", hex: "#80ff00" },
     { name: "Razer Green", hex: "#00ff00" },
-    { name: "Emerald", hex: "#10b981" },
-    { name: "Mint", hex: "#34d399" },
-    { name: "Teal", hex: "#14b8a6" },
-    { name: "Cyan", hex: "#00e5ff" },
-    { name: "Aqua", hex: "#06b6d4" },
-    { name: "Sky", hex: "#38bdf8" },
-    { name: "Blue", hex: "#2563eb" },
-    { name: "Cobalt", hex: "#1d4ed8" },
-    { name: "Indigo", hex: "#6366f1" },
+    { name: "Emerald", hex: "#00c853" },
+    { name: "Teal", hex: "#00b4b4" },
+    { name: "Cyan", hex: "#00ffff" },
+    { name: "Sky", hex: "#00bfff" },
+    { name: "Blue", hex: "#0000ff" },
     { name: "Purple", hex: "#8000ff" },
-    { name: "Violet", hex: "#a855f7" },
-    { name: "Lavender", hex: "#c084fc" },
-    { name: "Magenta", hex: "#d946ef" },
-    { name: "Pink", hex: "#ec4899" },
-    { name: "Rose", hex: "#f43f5e" },
-    { name: "Red", hex: "#ef4444" },
-    { name: "Crimson", hex: "#dc2626" },
-    { name: "Vermillion", hex: "#e11d48" },
-    { name: "Orange", hex: "#f97316" },
-    { name: "Amber", hex: "#f59e0b" },
-    { name: "Yellow", hex: "#eab308" },
-    { name: "Lime", hex: "#84cc16" },
-
-    // ── Pastels ──
-    { name: "Pastel Green", hex: "#86efac" },
-    { name: "Pastel Teal", hex: "#99f6e4" },
-    { name: "Pastel Cyan", hex: "#67e8f9" },
-    { name: "Pastel Blue", hex: "#93c5fd" },
-    { name: "Pastel Indigo", hex: "#a5b4fc" },
-    { name: "Pastel Purple", hex: "#c4b5fd" },
-    { name: "Pastel Lavender", hex: "#d8b4fe" },
-    { name: "Pastel Pink", hex: "#f9a8d4" },
-    { name: "Pastel Red", hex: "#fca5a5" },
-    { name: "Pastel Orange", hex: "#fdba74" },
-    { name: "Pastel Yellow", hex: "#fde047" },
-    { name: "Pastel Lime", hex: "#d9f99d" },
-
-    // ── Dark Tones ──
-    { name: "Dark Green", hex: "#065f46" },
-    { name: "Dark Teal", hex: "#115e59" },
-    { name: "Dark Cyan", hex: "#0e7490" },
-    { name: "Dark Blue", hex: "#1e3a5f" },
-    { name: "Dark Indigo", hex: "#312e81" },
-    { name: "Dark Purple", hex: "#581c87" },
-    { name: "Dark Pink", hex: "#9d174d" },
-    { name: "Dark Red", hex: "#7f1d1d" },
-    { name: "Dark Orange", hex: "#9a3412" },
-    { name: "Warm White", hex: "#fef3c7" },
-    { name: "Cool White", hex: "#e0f2fe" }
+    { name: "Magenta", hex: "#ff00ff" },
+    { name: "Pink", hex: "#ff1493" },
+    { name: "White", hex: "#ffffff" }
   ]
+}
+
+/** Convert a hex color string (#rrggbb or #rgb) to RGB components { r, g, b } (0-255). */
+function hexToRgb(hex) {
+  var str = String(hex || "").trim().replace("#", "")
+  if (str.length === 3) {
+    str = str[0] + str[0] + str[1] + str[1] + str[2] + str[2]
+  }
+  if (str.length !== 6) return { r: 0, g: 255, b: 0 }
+  var r = parseInt(str.substring(0, 2), 16)
+  var g = parseInt(str.substring(2, 4), 16)
+  var b = parseInt(str.substring(4, 6), 16)
+  return {
+    r: isNaN(r) ? 0 : Math.max(0, Math.min(255, r)),
+    g: isNaN(g) ? 255 : Math.max(0, Math.min(255, g)),
+    b: isNaN(b) ? 0 : Math.max(0, Math.min(255, b))
+  }
+}
+
+/** Convert RGB components (0-255) to a lowercase hex string (#rrggbb). */
+function rgbToHex(r, g, b) {
+  var rVal = Math.max(0, Math.min(255, Math.round(Number(r) || 0)))
+  var gVal = Math.max(0, Math.min(255, Math.round(Number(g) || 0)))
+  var bVal = Math.max(0, Math.min(255, Math.round(Number(b) || 0)))
+  var rHex = (rVal < 16 ? "0" : "") + rVal.toString(16)
+  var gHex = (gVal < 16 ? "0" : "") + gVal.toString(16)
+  var bHex = (bVal < 16 ? "0" : "") + bVal.toString(16)
+  return ("#" + rHex + gHex + bHex).toLowerCase()
+}
+
+/** Check if a string is a valid 6-digit or 3-digit hex color code. */
+function isValidHex(hex) {
+  var str = String(hex || "").trim()
+  return /^#[0-9a-fA-F]{6}$/.test(str) || /^[0-9a-fA-F]{6}$/.test(str) || /^#[0-9a-fA-F]{3}$/.test(str) || /^[0-9a-fA-F]{3}$/.test(str)
+}
+
+/** Normalize a hex string to canonical #rrggbb format, or return fallback. */
+function normalizeHex(hex, fallback) {
+  var str = String(hex || "").trim()
+  if (!str.startsWith("#")) str = "#" + str
+  if (str.length === 4) {
+    str = "#" + str[1] + str[1] + str[2] + str[2] + str[3] + str[3]
+  }
+  if (/^#[0-9a-fA-F]{6}$/.test(str)) return str.toLowerCase()
+  return fallback || "#00ff00"
 }
 
 /** Get the primary color for a device (from its color array or fallback to Razer Green). */
@@ -368,12 +369,12 @@ function primaryColor(device) {
 
 /** Get the secondary color for a device (from its color array or fallback to Cyan). */
 function secondaryColor(device) {
-  if (!device) return "#00e5ff"
+  if (!device) return "#00ffff"
   if (Array.isArray(device.colors) && device.colors.length > 1 && device.colors[1]) {
     return device.colors[1]
   }
   if (device.secondary_color) return device.secondary_color
-  return "#00e5ff"
+  return "#00ffff"
 }
 
 
@@ -949,6 +950,10 @@ if (typeof module !== "undefined") {
     isKeyboardType: isKeyboardType,
     keyLabel: keyLabel,
     buildDeviceMap: buildDeviceMap,
-    detectDeviceChanges: detectDeviceChanges
+    detectDeviceChanges: detectDeviceChanges,
+    hexToRgb: hexToRgb,
+    rgbToHex: rgbToHex,
+    isValidHex: isValidHex,
+    normalizeHex: normalizeHex
   }
 }
