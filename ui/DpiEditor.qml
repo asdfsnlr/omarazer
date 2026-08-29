@@ -250,7 +250,6 @@ PanelWindow {
 
         Button {
           text: "Back"
-          iconText: "󰁍"
           foreground: Color.foreground
           fontFamily: root.fontFamily
           fontSize: Style.font.body
@@ -265,7 +264,7 @@ PanelWindow {
           spacing: Style.space(2)
 
           Text {
-            text: "󰍽  DPI Sensitivity & Presets"
+            text: "DPI Sensitivity & Presets"
             color: Color.foreground
             font.family: root.fontFamily
             font.pixelSize: Style.font.title
@@ -286,7 +285,6 @@ PanelWindow {
 
         Button {
           text: "Apply"
-          iconText: "󰅬"
           foreground: Color.accent
           fontFamily: root.fontFamily
           fontSize: Style.font.body
@@ -388,7 +386,6 @@ PanelWindow {
 
         Button {
           text: "New"
-          iconText: "󰐕"
           fontFamily: root.fontFamily
           fontSize: Style.font.caption
           bordered: true
@@ -404,7 +401,6 @@ PanelWindow {
 
         Button {
           text: "Save"
-          iconText: "󰅬"
           fontFamily: root.fontFamily
           fontSize: Style.font.caption
           bordered: true
@@ -417,7 +413,6 @@ PanelWindow {
 
         Button {
           text: "Delete"
-          iconText: "󰚌"
           fontFamily: root.fontFamily
           fontSize: Style.font.caption
           bordered: true
@@ -451,7 +446,6 @@ PanelWindow {
 
         Button {
           text: "Save"
-          iconText: "󰅬"
           fontFamily: root.fontFamily
           fontSize: Style.font.caption
           bordered: true
@@ -470,7 +464,6 @@ PanelWindow {
 
         Button {
           text: "Cancel"
-          iconText: "X"
           fontFamily: root.fontFamily
           fontSize: Style.font.caption
           bordered: true
@@ -659,7 +652,7 @@ PanelWindow {
             spacing: Style.space(8)
 
             Text {
-              text: "󰏫  Preset Steps (Quick-Switch):"
+              text: "Preset Steps (Quick-Switch):"
               color: Color.foreground
               font.family: root.fontFamily
               font.pixelSize: Style.font.bodySmall
@@ -775,7 +768,6 @@ PanelWindow {
 
             Button {
               text: "Add Step"
-              iconText: "󰐕"
               fontFamily: root.fontFamily
               fontSize: Style.font.caption
               bordered: true

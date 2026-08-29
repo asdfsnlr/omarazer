@@ -31,13 +31,6 @@ BorderSurface {
     anchors.leftMargin: parent.contentLeftInset
     spacing: Style.space(6)
 
-    Text {
-      text: "󰌢"
-      color: root.dim
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.display
-      Layout.alignment: Qt.AlignHCenter
-    }
 
     Text {
       text: "No Razer Devices Connected"

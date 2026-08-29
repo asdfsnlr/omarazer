@@ -275,6 +275,11 @@ qmllint -I /usr/share/omarchy/shell ./Panel.qml
 
 ## Updates
 
+### August 29, 2026 (v1.5.0)
+- **Text-First Interface Redesign**: Streamlined and modernized the user interface by removing non-essential icon glyphs across panel headers, cards, sliders, metric indicators, quick effect controls, action buttons, and modal overlays.
+- **Selective Icon Retention**: Preserved icons exclusively for collapsible / dropdown panel indicators (chevron up/down `󰅃` / `󰅀`), the panel header **Refresh** button (`󰑐`), and the **Notification toggle** button (`󰂜` / `󰂛`).
+- **Telemetry & Badge Modernization**: Replaced icon-heavy battery and charging glyphs with clean, readable text badges (e.g. `85% (Charging)`).
+
 ### August 25, 2026 (v1.4.0)
 - **Mouse DPI Quick-Switch Presets**: Direct 1-click DPI step buttons on mouse device cards with reactive active-step accent styling.
 - **Dedicated DPI Preset & Profile Editor Window (`DpiEditor.qml`)**: Full modal overlay featuring live sensitivity sliders (100–max DPI), nudge adjustment buttons, custom step addition/removal, and quick templates (*Default*, *FPS*, *Gaming*, *Office*).
