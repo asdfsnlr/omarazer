@@ -13,7 +13,12 @@ def _connect():
     """Connect to the OpenRazer daemon and return DeviceManager."""
     import openrazer.client
 
-    return openrazer.client.DeviceManager()
+    dm = openrazer.client.DeviceManager()
+    try:
+        dm.sync_effects = False
+    except Exception:
+        pass
+    return dm
 
 
 def set_brightness(serial: str, value: float) -> bool:

@@ -14,8 +14,11 @@ An Omarchy shell bar widget and panel plugin that connects to the OpenRazer daem
 - **At-a-Glance Status in Your Bar**: Instantly see connected device counts and battery states right from the Omarchy status bar without cluttering your workspace.
 - **Native & Lightweight Performance**: Fast, native QML interface powered by Quickshell — no bloated background web runtimes or heavy Electron applications required.
 - **Instant Lighting & Profile Switching**: Adjust RGB lighting effects, colors, brightness, animation speeds, and global presets in seconds with immediate hardware response.
+- **Custom Color Picker Overlay**: Full modal color picker featuring live RGB sliders (0–255), hex code input, live original vs new preview swatch, and quick preset shortcuts.
+- **Calibrated 15-Color Essential Palette**: 100% pure, accurate RGB color presets for everyday use (Red, Orange, Amber, Yellow, Lime, Razer Green, Emerald, Teal, Cyan, Sky, Blue, Purple, Magenta, Pink, White).
+- **Independent Device Lighting Control**: True individual peripheral lighting isolation ensuring single-device color modifications never unintentionally broadcast across all devices.
 - **Mouse DPI Step Presets & Profiles**: Instant 1-click DPI step switching right from device cards, plus a dedicated preset editor with live sensitivity sliders, custom step management, and saveable DPI profiles.
-- **Per-Key LED Matrix Editor**: Full-screen keyboard editor with paint modes, color palette, used-color tracking, and key labels — paint individual keys, fill entire rows, or fill all at once.
+- **Per-Key LED Matrix Editor**: Full-screen keyboard editor with paint modes, color palette, custom hex popup, used-color tracking, and key labels — paint individual keys, fill entire rows, or fill all at once.
 - **Saveable Profiles (Lighting & DPI)**: Create, load, and delete named per-key lighting profiles and mouse DPI profiles; auto-load on selection with intuitive inline creation workflow.
 - **Wireless Battery Awareness**: Color-coded battery level indicators and charging status prevent your wireless mice and headsets from running out of power mid-game or mid-work.
 - **Keyboard-First Ergonomics**: Designed for tiling window manager workflows with full keyboard navigation, quick shortcuts (`Esc` to close, `r` to refresh), and mouse controls.
@@ -34,12 +37,15 @@ An Omarchy shell bar widget and panel plugin that connects to the OpenRazer daem
   - **DPI Profile System**: Save, load, and delete named DPI profiles (*Default*, *FPS*, *Gaming*, *Office*) stored in `~/.config/omarazer/dpi_profiles/`.
   - **Quick Preset Templates**: One-click application of curated preset templates (e.g. *FPS (800, 1200, 3000)*, *Gaming (400-3200)*, *Office*).
   - **Hardware On-Board Memory Stages**: Driver-level support for programming hardware on-board memory stages (`set_dpi_stages`) on compatible devices.
-- **Lighting Effect Configurations**:
+- **Lighting Effect Configurations & Color Management**:
+  - **Dedicated Custom Color Picker Window (`ColorPicker.qml`)**: Full modal overlay featuring real-time RGB sliders (0–255), direct hex code input (`#RRGGBB`), live original vs. new comparison preview swatch, and quick palette presets.
+  - **Calibrated 15-Color Essential Palette**: 15 vivid, high-precision everyday colors calibrated to 100% RGB purity (eliminating dull/washed-out web hex values).
+  - **Independent Device Lighting Control**: Explicit isolation preventing daemon effect synchronization from leaking across individual peripherals.
   - **Categorized Per-Device Effect Organization**: Grouped into logical categories (**Presets**, **Dynamic**, and **Interactive**) displaying only the lighting effects supported by each peripheral.
   - **13 Supported Effects**: Off, Static, Spectrum, Wave, Breathing (Single/Random/Dual), Reactive, Ripple (Single/Random), Starlight (Random/Single/Dual).
   - **Per-Effect Settings Card**: Dedicated settings card for the active effect with context-aware parameter controls:
-    - Primary RGB color palette swatches with active selection indicator.
-    - Secondary RGB color palette swatches for dual-color effects (Dual Starlight).
+    - Primary RGB color palette swatches with active selection indicator and **Custom** color picker trigger.
+    - Secondary RGB color palette swatches for dual-color effects (Dual Starlight) with **Custom** color picker trigger.
     - Wave direction selector (Left / Right).
     - Speed selector (Fast / Normal / Slow / Very Slow) for Reactive, Ripple, and Starlight effects.
     - Sub-mode switchers for Breathing (Single / Random), Ripple (Single / Random), and Starlight (Random / Single / Dual).
@@ -49,7 +55,7 @@ An Omarchy shell bar widget and panel plugin that connects to the OpenRazer daem
   - Full-screen overlay with scrollable LED matrix grid and key labels (Esc, F1–F12, alphanumeric, modifiers, etc.).
   - Two paint modes: **Paint** (single key) and **Fill Row** (entire row on click).
   - Click-and-drag painting across multiple cells.
-  - 10-color palette with current color indicator and used-color tracking row.
+  - 15-color palette with current color indicator, custom hex color popup, and used-color tracking row.
   - **Fill All** / **Clear** / **Recolor All** global actions.
   - Matrix dimensions and painted key count in the status bar.
   - Apply to device button with unsaved-changes indicator.
@@ -274,6 +280,12 @@ qmllint -I /usr/share/omarchy/shell ./Panel.qml
 ```
 
 ## Updates
+
+### August 29, 2026 (v1.6.0)
+- **Custom Color Picker Modal Window (`ColorPicker.qml`)**: Full overlay color picker dialog with live RGB sliders (0–255), manual hex input (`#RRGGBB`), real-time comparison preview swatch, and quick palette shortcuts.
+- **Calibrated 15-Color Essential Palette**: Streamlined the color selection to 15 essential, high-precision basic colors calibrated with 100% RGB accuracy (Red, Orange, Amber, Yellow, Lime, Razer Green, Emerald, Teal, Cyan, Sky, Blue, Purple, Magenta, Pink, White).
+- **Per-Key Custom Color Popup**: Added inline custom hex color input to the per-key LED matrix lighting editor.
+- **Independent Device Lighting Control Fix**: Fixed an issue where the OpenRazer daemon synchronized static colors across all connected devices by explicitly disabling `sync_effects` on single-device operations.
 
 ### August 29, 2026 (v1.5.0)
 - **Text-First Interface Redesign**: Streamlined and modernized the user interface by removing non-essential icon glyphs across panel headers, cards, sliders, metric indicators, quick effect controls, action buttons, and modal overlays.

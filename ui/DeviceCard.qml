@@ -26,6 +26,7 @@ ColumnLayout {
   signal setDpi(serial: string, value: int)
   signal openPerKeyEditor(device: var)
   signal openDpiEditor(device: var)
+  signal openColorPicker(device: var, initialColor: string, isSecondary: bool)
   signal toggleExpanded(deviceKey: string)
 
   readonly property string deviceKey: modelData.serial || modelData.name || "unknown"
@@ -384,6 +385,7 @@ ColumnLayout {
       onSetBrightness: function(serial, value) { root.setBrightness(serial, value) }
       onSetEffect: function(serial, effect, color, color2, param) { root.setEffect(serial, effect, color, color2, param) }
       onOpenPerKeyEditor: function(device) { root.openPerKeyEditor(device) }
+      onOpenColorPicker: function(device, initialColor, isSecondary) { root.openColorPicker(device, initialColor, isSecondary) }
     }
   }
 }

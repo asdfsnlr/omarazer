@@ -171,5 +171,54 @@ assert.strictEqual(Model.getPollInterval({ pollIntervalSec: 2 }, 30), 30);
 assert.strictEqual(Model.getPollInterval({ pollIntervalSec: 5000 }, 30), 30);
 assert.strictEqual(Model.getPollInterval({ pollIntervalSec: 10, refreshIntervalSec: 25 }), 10);
 
+// Test paletteColors (15 essential basic colors)
+const palette = Model.paletteColors();
+assert.strictEqual(palette.length, 15, "Palette should contain exactly 15 basic colors");
+
+// Test that all entries have valid structure and #rrggbb format
+const hexRegex = /^#[0-9a-f]{6}$/i;
+palette.forEach((c) => {
+  assert.ok(typeof c.name === "string" && c.name.length > 0, "Color should have a name");
+  assert.ok(hexRegex.test(c.hex), `Color ${c.name} should have valid 6-digit hex, got ${c.hex}`);
+});
+
+// Test precision of primary everyday colors
+const colorByName = {};
+palette.forEach((c) => { colorByName[c.name] = c.hex.toLowerCase(); });
+
+assert.strictEqual(colorByName["Red"], "#ff0000", "Red must be pure #ff0000");
+assert.strictEqual(colorByName["Yellow"], "#ffff00", "Yellow must be pure #ffff00");
+assert.strictEqual(colorByName["Blue"], "#0000ff", "Blue must be pure #0000ff");
+assert.strictEqual(colorByName["Razer Green"], "#00ff00", "Razer Green must be #00ff00");
+assert.strictEqual(colorByName["Cyan"], "#00ffff", "Cyan must be pure #00ffff");
+assert.strictEqual(colorByName["Magenta"], "#ff00ff", "Magenta must be pure #ff00ff");
+assert.strictEqual(colorByName["Orange"], "#ff8000", "Orange must be pure #ff8000");
+assert.strictEqual(colorByName["White"], "#ffffff", "White must be pure #ffffff");
+assert.strictEqual(colorByName["Pink"], "#ff1493", "Pink must be pure #ff1493");
+assert.strictEqual(colorByName["Purple"], "#8000ff", "Purple must be pure #8000ff");
+
+// Test hexToRgb and rgbToHex
+assert.deepStrictEqual(Model.hexToRgb("#ff0000"), { r: 255, g: 0, b: 0 });
+assert.deepStrictEqual(Model.hexToRgb("#00ff00"), { r: 0, g: 255, b: 0 });
+assert.deepStrictEqual(Model.hexToRgb("#0000ff"), { r: 0, g: 0, b: 255 });
+assert.strictEqual(Model.rgbToHex(255, 0, 0), "#ff0000");
+assert.strictEqual(Model.rgbToHex(0, 255, 0), "#00ff00");
+assert.strictEqual(Model.rgbToHex(0, 0, 255), "#0000ff");
+
+// Test isValidHex & normalizeHex
+assert.strictEqual(Model.isValidHex("#ff0000"), true);
+assert.strictEqual(Model.isValidHex("ff0000"), true);
+assert.strictEqual(Model.isValidHex("#f00"), true);
+assert.strictEqual(Model.isValidHex("invalid"), false);
+assert.strictEqual(Model.normalizeHex("ff0000"), "#ff0000");
+assert.strictEqual(Model.normalizeHex("#f00"), "#ff0000");
+assert.strictEqual(Model.normalizeHex("xyz", "#00ff00"), "#00ff00");
+
+// Test primaryColor & secondaryColor defaults
+assert.strictEqual(Model.primaryColor(null), "#00ff00");
+assert.strictEqual(Model.secondaryColor(null), "#00ffff");
+assert.strictEqual(Model.primaryColor({ colors: ["#ff0000"] }), "#ff0000");
+assert.strictEqual(Model.secondaryColor({ colors: ["#ff0000", "#ffff00"] }), "#ffff00");
+
 console.log("All Model.js tests passed!");
 
