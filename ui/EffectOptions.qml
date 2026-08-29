@@ -62,14 +62,6 @@ BorderSurface {
         spacing: Style.space(6)
 
         Text {
-          text: "󰌌"
-          color: root.dim
-          font.family: root.fontFamily
-          font.pixelSize: Style.font.bodySmall
-          Layout.alignment: Qt.AlignVCenter
-        }
-
-        Text {
           text: "Per-Key Lighting"
           color: root.dim
           font.family: root.fontFamily
@@ -81,7 +73,6 @@ BorderSurface {
 
         Button {
           text: "Open"
-          iconText: "󰒓"
           foreground: root.fg
           fontFamily: root.fontFamily
           fontSize: Style.font.caption
@@ -127,13 +118,6 @@ BorderSurface {
               spacing: Style.space(5)
 
               Text {
-                text: categoryLayout.modelData.icon
-                color: root.dim
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.caption
-              }
-
-              Text {
                 text: categoryLayout.modelData.label
                 color: root.dim
                 font.family: root.fontFamily
@@ -156,7 +140,6 @@ BorderSurface {
                   required property string modelData
 
                   text: Model.effectDisplayName(effectBtn.modelData)
-                  iconText: Model.effectIcon(effectBtn.modelData)
                   selected: !root.perKeyActive && Model.isEffectSelected(root.modelData.current_effect, effectBtn.modelData)
                   bordered: true
                   fontFamily: root.fontFamily
@@ -202,13 +185,6 @@ BorderSurface {
           spacing: Style.space(6)
 
           Text {
-            text: "󰌵"
-            color: Color.accent
-            font.family: root.fontFamily
-            font.pixelSize: Style.font.caption
-          }
-
-          Text {
             text: Model.effectDisplayName(root.modelData.current_effect) + " Options" + (Model.needsSpeed(root.modelData.current_effect) ? " • " + Model.formatSpeed(root.currentSpeed) : "")
             color: root.fg
             font.family: root.fontFamily
@@ -237,7 +213,6 @@ BorderSurface {
           Button {
             visible: Model.hasEffect(root.modelData, "breath_single")
             text: "Single Color"
-            iconText: "󰔄"
             fontFamily: root.fontFamily
             fontSize: Style.font.caption
             bordered: true
@@ -250,7 +225,6 @@ BorderSurface {
           Button {
             visible: Model.hasEffect(root.modelData, "breath_random")
             text: "Random"
-            iconText: "󰔄"
             fontFamily: root.fontFamily
             fontSize: Style.font.caption
             bordered: true
@@ -279,7 +253,6 @@ BorderSurface {
           Button {
             visible: Model.hasEffect(root.modelData, "ripple")
             text: "Single Color"
-            iconText: "󰑈"
             fontFamily: root.fontFamily
             fontSize: Style.font.caption
             bordered: true
@@ -292,7 +265,6 @@ BorderSurface {
           Button {
             visible: Model.hasEffect(root.modelData, "ripple_random")
             text: "Random"
-            iconText: "󰑈"
             fontFamily: root.fontFamily
             fontSize: Style.font.caption
             bordered: true
@@ -321,7 +293,6 @@ BorderSurface {
           Button {
             visible: Model.hasEffect(root.modelData, "starlight_random")
             text: "Random"
-            iconText: "󰵚"
             fontFamily: root.fontFamily
             fontSize: Style.font.caption
             bordered: true
@@ -334,7 +305,6 @@ BorderSurface {
           Button {
             visible: Model.hasEffect(root.modelData, "starlight_single")
             text: "Single Color"
-            iconText: "󰵚"
             fontFamily: root.fontFamily
             fontSize: Style.font.caption
             bordered: true
@@ -347,7 +317,6 @@ BorderSurface {
           Button {
             visible: Model.hasEffect(root.modelData, "starlight_dual")
             text: "Dual"
-            iconText: "󰵚"
             fontFamily: root.fontFamily
             fontSize: Style.font.caption
             bordered: true
@@ -473,7 +442,6 @@ BorderSurface {
 
           Button {
             text: "Left"
-            iconText: "󰁍"
             fontFamily: root.fontFamily
             fontSize: Style.font.caption
             bordered: true
@@ -484,7 +452,6 @@ BorderSurface {
 
           Button {
             text: "Right"
-            iconText: "󰁔"
             fontFamily: root.fontFamily
             fontSize: Style.font.caption
             bordered: true
@@ -519,7 +486,6 @@ BorderSurface {
               readonly property bool isSelected: root.currentSpeed === speedBtn.modelData.value
 
               text: speedBtn.modelData.label
-              iconText: speedBtn.modelData.icon
               tooltipText: speedBtn.modelData.desc
               selected: isSelected
               bordered: true

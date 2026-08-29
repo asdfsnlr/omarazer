@@ -20,14 +20,6 @@ RowLayout {
   Layout.fillWidth: true
   spacing: Style.space(10)
 
-  Text {
-    text: root.barIcon
-    color: Color.accent
-    font.family: root.fontFamily
-    font.pixelSize: Style.font.display
-    Layout.alignment: Qt.AlignVCenter
-  }
-
   ColumnLayout {
     Layout.fillWidth: true
     spacing: Style.space(2)

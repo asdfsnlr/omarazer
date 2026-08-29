@@ -59,14 +59,6 @@ ColumnLayout {
     spacing: Style.space(8)
 
     Text {
-      text: Model.deviceTypeIcon(root.modelData)
-      color: Color.accent
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.title
-      Layout.alignment: Qt.AlignVCenter
-    }
-
-    Text {
       text: root.modelData.name || "Unknown Razer Device"
       color: root.fg
       font.family: root.fontFamily
@@ -130,14 +122,7 @@ ColumnLayout {
       spacing: Style.space(4)
 
       Text {
-        text: Model.batteryIcon(root.modelData.battery_level, root.modelData.is_charging)
-        color: Model.batteryColor(root.modelData.battery_level, root.modelData.is_charging)
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.bodySmall
-      }
-
-      Text {
-        text: (root.modelData.battery_level !== null ? root.modelData.battery_level + "%" : "") + (root.modelData.is_charging ? " 󱐋" : "")
+        text: (root.modelData.battery_level !== null ? root.modelData.battery_level + "%" : "") + (root.modelData.is_charging ? " (Charging)" : "")
         color: Model.batteryColor(root.modelData.battery_level, root.modelData.is_charging)
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption
@@ -171,14 +156,6 @@ ColumnLayout {
     visible: root.modelData.has_brightness && root.modelData.brightness !== null
     Layout.fillWidth: true
     spacing: Style.space(8)
-
-    Text {
-      text: "󰃟"
-      color: root.dim
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.bodySmall
-      Layout.alignment: Qt.AlignVCenter
-    }
 
     Text {
       text: "Brightness"
@@ -219,14 +196,6 @@ ColumnLayout {
     visible: root.modelData.has_poll_rate && root.modelData.poll_rate !== null
     Layout.fillWidth: true
     spacing: Style.space(8)
-
-    Text {
-      text: "󰍽"
-      color: root.dim
-      font.family: root.fontFamily
-      font.pixelSize: Style.font.bodySmall
-      Layout.alignment: Qt.AlignVCenter
-    }
 
     Text {
       text: "Polling Rate"
@@ -273,14 +242,6 @@ ColumnLayout {
       spacing: Style.space(8)
 
       Text {
-        text: "󰍽"
-        color: root.dim
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.bodySmall
-        Layout.alignment: Qt.AlignVCenter
-      }
-
-      Text {
         text: "DPI Sensitivity"
         color: root.dim
         font.family: root.fontFamily
@@ -301,7 +262,6 @@ ColumnLayout {
 
       Button {
         text: "Presets"
-        iconText: "󰏫"
         foreground: Color.accent
         fontFamily: root.fontFamily
         fontSize: Style.font.caption
@@ -356,14 +316,6 @@ ColumnLayout {
       spacing: Style.space(6)
 
       Text {
-        text: "󰌵"
-        color: root.dim
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.bodySmall
-        Layout.alignment: Qt.AlignVCenter
-      }
-
-      Text {
         text: "Lighting Effect"
         color: root.dim
         font.family: root.fontFamily
@@ -376,7 +328,7 @@ ColumnLayout {
       Button {
         id: effectDropdownBtn
         text: root.perKeyActive ? "Per-Key" : Model.effectDisplayName(root.modelData.current_effect)
-        iconText: (root.perKeyActive ? "󰌌" : Model.effectIcon(root.modelData.current_effect)) + (root.isExpanded ? " 󰅃" : " 󰅀")
+        iconText: root.isExpanded ? "󰅃" : "󰅀"
         foreground: Color.accent
         fontFamily: root.fontFamily
         fontSize: Style.font.caption

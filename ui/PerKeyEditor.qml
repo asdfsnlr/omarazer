@@ -361,7 +361,6 @@ PanelWindow {
 
         Button {
           text: "Back"
-          iconText: "󰁍"
           foreground: Color.foreground
           fontFamily: root.fontFamily
           fontSize: Style.font.body
@@ -376,7 +375,7 @@ PanelWindow {
           spacing: Style.space(2)
 
           Text {
-            text: "󰌌  Per-Key Lighting"
+            text: "Per-Key Lighting"
             color: Color.foreground
             font.family: root.fontFamily
             font.pixelSize: Style.font.title
@@ -397,7 +396,6 @@ PanelWindow {
 
         Button {
           text: "Apply"
-          iconText: "󰅬"
           foreground: root.hasChanges ? Color.accent : Color.muted
           fontFamily: root.fontFamily
           fontSize: Style.font.body
@@ -503,7 +501,6 @@ PanelWindow {
 
         Button {
           text: "New"
-          iconText: "󰐕"
           fontFamily: root.fontFamily
           fontSize: Style.font.caption
           bordered: true
@@ -519,7 +516,6 @@ PanelWindow {
 
         Button {
           text: "Save"
-          iconText: "󰅬"
           fontFamily: root.fontFamily
           fontSize: Style.font.caption
           bordered: true
@@ -532,7 +528,6 @@ PanelWindow {
 
         Button {
           text: "Delete"
-          iconText: "󰚌"
           fontFamily: root.fontFamily
           fontSize: Style.font.caption
           bordered: true
@@ -565,7 +560,6 @@ PanelWindow {
 
         Button {
           text: "Save"
-          iconText: "󰅬"
           fontFamily: root.fontFamily
           fontSize: Style.font.caption
           bordered: true
@@ -583,7 +577,6 @@ PanelWindow {
 
         Button {
           text: "Cancel"
-          iconText: "X"
           fontFamily: root.fontFamily
           fontSize: Style.font.caption
           bordered: true
@@ -736,7 +729,6 @@ PanelWindow {
 
         Button {
           text: "Paint"
-          iconText: "󰏘"
           fontFamily: root.fontFamily
           fontSize: Style.font.caption
           bordered: true
@@ -748,7 +740,6 @@ PanelWindow {
 
         Button {
           text: "Fill Row"
-          iconText: "[]"
           fontFamily: root.fontFamily
           fontSize: Style.font.caption
           bordered: true
@@ -762,7 +753,6 @@ PanelWindow {
 
         Button {
           text: "Fill All"
-          iconText: "󰆤"
           fontFamily: root.fontFamily
           fontSize: Style.font.caption
           bordered: true
@@ -773,7 +763,6 @@ PanelWindow {
 
         Button {
           text: "Clear"
-          iconText: "󰚌"
           fontFamily: root.fontFamily
           fontSize: Style.font.caption
           bordered: true

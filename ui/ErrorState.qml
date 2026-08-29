@@ -39,13 +39,6 @@ BorderSurface {
       spacing: Style.space(8)
 
       Text {
-        text: "󰅚"
-        color: "#ef4444"
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.title
-      }
-
-      Text {
         text: "Daemon Not Running"
         color: "#ef4444"
         font.family: root.fontFamily
@@ -70,7 +63,6 @@ BorderSurface {
 
       Button {
         text: "Start Daemon"
-        iconText: "󰐊"
         foreground: root.fg
         fontFamily: root.fontFamily
         fontSize: Style.font.caption
@@ -80,7 +72,6 @@ BorderSurface {
 
       Button {
         text: "Retry"
-        iconText: "󰑐"
         foreground: root.fg
         fontFamily: root.fontFamily
         fontSize: Style.font.caption

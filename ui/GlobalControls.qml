@@ -42,13 +42,6 @@ BorderSurface {
       spacing: Style.space(6)
 
       Text {
-        text: "󰌵"
-        color: Color.accent
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.caption
-      }
-
-      Text {
         text: "All Devices:"
         color: root.dim
         font.family: root.fontFamily
@@ -60,7 +53,6 @@ BorderSurface {
 
       Button {
         text: "Spectrum"
-        iconText: "󰑖"
         foreground: root.fg
         fontFamily: root.fontFamily
         fontSize: Style.font.caption
@@ -72,7 +64,6 @@ BorderSurface {
 
       Button {
         text: "Wave"
-        iconText: "󰓅"
         foreground: root.fg
         fontFamily: root.fontFamily
         fontSize: Style.font.caption
@@ -84,7 +75,6 @@ BorderSurface {
 
       Button {
         text: "Green"
-        iconText: "󰏘"
         foreground: root.fg
         fontFamily: root.fontFamily
         fontSize: Style.font.caption
@@ -96,7 +86,6 @@ BorderSurface {
 
       Button {
         text: "Off"
-        iconText: "󰚌"
         foreground: root.fg
         fontFamily: root.fontFamily
         fontSize: Style.font.caption
@@ -112,14 +101,6 @@ BorderSurface {
       visible: root.dataVersion >= 0 && Model.hasBrightnessSupport(root.razerData.devices)
       Layout.fillWidth: true
       spacing: Style.space(8)
-
-      Text {
-        text: "󰃟"
-        color: root.dim
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.bodySmall
-        Layout.alignment: Qt.AlignVCenter
-      }
 
       Text {
         text: "Brightness"
