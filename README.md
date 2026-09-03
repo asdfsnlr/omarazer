@@ -18,7 +18,7 @@ An Omarchy shell bar widget and panel plugin that connects to the OpenRazer daem
 - **Calibrated 15-Color Essential Palette**: 100% pure, accurate RGB color presets for everyday use (Red, Orange, Amber, Yellow, Lime, Razer Green, Emerald, Teal, Cyan, Sky, Blue, Purple, Magenta, Pink, White).
 - **Independent Device Lighting Control**: True individual peripheral lighting isolation ensuring single-device color modifications never unintentionally broadcast across all devices.
 - **Mouse DPI Step Presets & Profiles**: Instant 1-click DPI step switching right from device cards, plus a dedicated preset editor with live sensitivity sliders, custom step management, and saveable DPI profiles.
-- **Per-Key LED Matrix Editor**: Full-screen keyboard editor with paint modes, color palette, custom hex popup, used-color tracking, and key labels — paint individual keys, fill entire rows, or fill all at once.
+- **Per-Key LED Matrix Editor**: Full-screen keyboard editor with paint modes, essential color palette, custom ColorPicker modal integration, used-color tracking, and key labels — paint individual keys, fill entire rows, or fill all at once.
 - **Saveable Profiles (Lighting & DPI)**: Create, load, and delete named per-key lighting profiles and mouse DPI profiles; auto-load on selection with intuitive inline creation workflow.
 - **Wireless Battery Awareness**: Color-coded battery level indicators and charging status prevent your wireless mice and headsets from running out of power mid-game or mid-work.
 - **Keyboard-First Ergonomics**: Designed for tiling window manager workflows with full keyboard navigation, quick shortcuts (`Esc` to close, `r` to refresh), and mouse controls.
@@ -280,6 +280,11 @@ qmllint -I /usr/share/omarchy/shell ./Panel.qml
 ```
 
 ## Updates
+
+### September 3, 2026 (v1.6.1)
+- **Fix QML Repeater Delegate & ReferenceError in Per-Key Editor (`PerKeyEditor.qml`)**: Resolved runtime crash (`Delegate must be of Item type` and `ReferenceError: customHexBtn is not defined`) caused by nesting custom button and popup elements directly inside the palette `Repeater`.
+- **Integrated Full Color Picker Modal in Per-Key Lighting**: Replaced the inline raw hex text popup with the dedicated `ColorPicker.qml` modal overlay (live RGB sliders, `#RRGGBB` input, real-time comparison preview swatch, and essential presets), unifying the color selection experience across the entire plugin.
+- **Restored Preset Palette Rendering in Per-Key Editor**: Ensured preset basic colors (`Model.paletteColors()`) render reliably with natural fluid wrapping in the "Paint:" section.
 
 ### August 29, 2026 (v1.6.0)
 - **Custom Color Picker Modal Window (`ColorPicker.qml`)**: Full overlay color picker dialog with live RGB sliders (0–255), manual hex input (`#RRGGBB`), real-time comparison preview swatch, and quick palette shortcuts.
